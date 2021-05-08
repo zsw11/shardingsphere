@@ -163,6 +163,14 @@ functionName
     : identifier
     ;
 
+dbLink
+    : identifier
+    ;
+
+parameterValue
+    : literals | identifier
+    ;
+
 directoryName
     : identifier
     ;
@@ -172,10 +180,6 @@ opaqueFormatSpec
     ;
 
 accessDriverType
-    : identifier
-    ;
-
-partition
     : identifier
     ;
 
@@ -215,12 +219,28 @@ subpartitionName
     : identifier
     ;
 
+parameterName
+    : identifier
+    ;
+
+editionName
+    : identifier
+    ;
+
+containerName
+    : identifier
+    ;
+
 partitionName
     : identifier
     ;
 
 partitionSetName
     : identifier
+    ;
+
+partitionKeyValue
+    : NUMBER_ | dateTimeLiterals
     ;
 
 zonemapName
@@ -257,6 +277,10 @@ oracleId
 
 collationName
     : STRING_ | IDENTIFIER_
+    ;
+
+columnCollationName
+    : identifier
     ;
 
 alias
@@ -497,4 +521,80 @@ matchNone
 
 hashSubpartitionQuantity
     : NUMBER
+    ;
+
+odciParameters
+    : identifier
+    ;
+
+databaseName
+    : identifier
+    ;
+
+locationName
+    : STRING_
+    ;
+
+fileName
+    : STRING_
+    ;
+
+asmFileName
+    : STRING_
+    ;
+
+fileNumber
+    : NUMBER_
+    ;
+
+instanceName
+    : STRING_
+    ;
+
+logminerSessionName
+    : identifier
+    ;
+
+tablespaceGroupName
+    : identifier
+    ;
+
+copyName
+    : identifier
+    ;
+
+mirrorName
+    : identifier
+    ;
+
+uriString
+    : identifier
+    ;
+
+qualifiedCredentialName
+    : identifier
+    ;
+
+pdbName
+    : identifier
+    ;
+
+diskgroupName
+    : identifier
+    ;
+
+templateName
+    : identifier
+    ;
+
+aliasName
+    : identifier
+    ;
+
+domain
+    : identifier
+    ;
+
+dateValue
+    : dateTimeLiterals | stringLiterals | numberLiterals | expr
     ;

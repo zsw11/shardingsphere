@@ -47,5 +47,7 @@ execute
     | call
     | merge
     | alterSynonym
+    | alterSession
+    | alterDatabase
     ) SEMI_?
     ;

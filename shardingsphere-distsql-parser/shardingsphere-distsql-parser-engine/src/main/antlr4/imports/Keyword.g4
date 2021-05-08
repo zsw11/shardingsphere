@@ -154,3 +154,39 @@ USER
 PASSWORD
     : P A S S W O R D
     ;
+
+TABLE
+    : T A B L E
+    ;
+
+SHARDING_COLUMN
+    : S H A R D I N G UL_ C O L U M N
+    ;
+    
+TYPE
+    : T Y P E
+    ;
+    
+NAME
+    : N A M E
+    ;
+
+PROPERTIES
+    : P R O P E R T I E S
+    ;
+    
+COLUMN
+    : C O L U M N
+    ;
+
+BINDING
+    : B I N D I N G
+    ;
+
+RULES
+    : R U L E S
+    ;
+
+BROADCAST
+    : B R O A D C A S T
+    ;

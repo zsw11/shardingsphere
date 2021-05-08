@@ -36,6 +36,9 @@ import org.apache.shardingsphere.proxy.frontend.command.CommandExecuteEngine;
 import org.apache.shardingsphere.proxy.frontend.command.executor.CommandExecutor;
 import org.apache.shardingsphere.proxy.frontend.command.executor.QueryCommandExecutor;
 import org.apache.shardingsphere.proxy.frontend.command.executor.ResponseType;
+import org.apache.shardingsphere.proxy.frontend.postgresql.command.query.binary.bind.PostgreSQLComBindExecutor;
+import org.apache.shardingsphere.proxy.frontend.postgresql.command.query.binary.sync.PostgreSQLComSyncExecutor;
+import org.apache.shardingsphere.proxy.frontend.postgresql.command.query.text.PostgreSQLComQueryExecutor;
 import org.apache.shardingsphere.proxy.frontend.postgresql.err.PostgreSQLErrPacketFactory;
 
 import java.sql.SQLException;
@@ -68,19 +71,22 @@ public final class PostgreSQLCommandExecuteEngine implements CommandExecuteEngin
     
     @Override
     public Optional<DatabasePacket<?>> getOtherPacket() {
-        return Optional.of(new PostgreSQLReadyForQueryPacket());
+        // TODO judge is in transaction from context, not from TransactionHolder (because of thread local)
+        return Optional.of(new PostgreSQLReadyForQueryPacket(true));
     }
     
     @Override
     public void writeQueryData(final ChannelHandlerContext context,
                                final BackendConnection backendConnection, final QueryCommandExecutor queryCommandExecutor, final int headerPackagesCount) throws SQLException {
-        if (ResponseType.QUERY == queryCommandExecutor.getResponseType() && !context.channel().isActive()) {
-            context.write(new PostgreSQLCommandCompletePacket());
-            context.write(new PostgreSQLReadyForQueryPacket());
+        if (queryCommandExecutor instanceof PostgreSQLComSyncExecutor) {
             return;
         }
-        if (ResponseType.UPDATE == queryCommandExecutor.getResponseType()) {
-            context.write(new PostgreSQLReadyForQueryPacket());
+        if (ResponseType.QUERY == queryCommandExecutor.getResponseType() && !context.channel().isActive()) {
+            context.write(new PostgreSQLCommandCompletePacket());
+            return;
+        }
+        if (ResponseType.UPDATE == queryCommandExecutor.getResponseType() && !(queryCommandExecutor instanceof PostgreSQLComBindExecutor)) {
+            context.write(new PostgreSQLReadyForQueryPacket(true));
             return;
         }
         int count = 0;
@@ -98,7 +104,11 @@ public final class PostgreSQLCommandExecuteEngine implements CommandExecuteEngin
                 count = 0;
             }
         }
-        context.write(new PostgreSQLCommandCompletePacket());
-        context.write(new PostgreSQLReadyForQueryPacket());
+        if (ResponseType.QUERY == queryCommandExecutor.getResponseType()) {
+            context.write(new PostgreSQLCommandCompletePacket());
+        }
+        if (queryCommandExecutor instanceof PostgreSQLComQueryExecutor) {
+            context.write(new PostgreSQLReadyForQueryPacket(true));
+        }
     }
 }
