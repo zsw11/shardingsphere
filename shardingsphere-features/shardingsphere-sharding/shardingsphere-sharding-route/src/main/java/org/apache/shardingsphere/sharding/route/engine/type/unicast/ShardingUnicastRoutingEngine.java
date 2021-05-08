@@ -19,7 +19,6 @@ package org.apache.shardingsphere.sharding.route.engine.type.unicast;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.shardingsphere.infra.config.exception.ShardingSphereConfigurationException;
 import org.apache.shardingsphere.infra.datanode.DataNode;
@@ -51,7 +50,10 @@ public final class ShardingUnicastRoutingEngine implements ShardingRouteEngine {
         String dataSourceName = getRandomDataSourceName(shardingRule.getDataSourceNames());
         RouteMapper dataSourceMapper = new RouteMapper(dataSourceName, dataSourceName);
         if (shardingRule.isAllBroadcastTables(logicTables)) {
-            List<RouteMapper> tableMappers = logicTables.stream().map(each -> new RouteMapper(each, each)).collect(Collectors.toCollection(() -> new ArrayList<>(logicTables.size())));
+            List<RouteMapper> tableMappers = new ArrayList<>(logicTables.size());
+            for (String each : logicTables) {
+                tableMappers.add(new RouteMapper(each, each));
+            }
             routeContext.getRouteUnits().add(new RouteUnit(dataSourceMapper, tableMappers));
         } else if (logicTables.isEmpty()) {
             routeContext.getRouteUnits().add(new RouteUnit(dataSourceMapper, Collections.emptyList()));
@@ -65,32 +67,30 @@ public final class ShardingUnicastRoutingEngine implements ShardingRouteEngine {
             routeContext.getRouteUnits().add(new RouteUnit(new RouteMapper(dataNode.getDataSourceName(), dataNode.getDataSourceName()),
                     Collections.singletonList(new RouteMapper(logicTableName, dataNode.getTableName()))));
         } else {
-            routeWithMultipleTables(routeContext, shardingRule);
-        }
-    }
-
-    private void routeWithMultipleTables(final RouteContext routeContext, final ShardingRule shardingRule) throws ShardingSphereConfigurationException {
-        List<RouteMapper> tableMappers = new ArrayList<>(logicTables.size());
-        Set<String> availableDatasourceNames = Collections.emptySet();
-        boolean first = true;
-        for (String each : logicTables) {
-            TableRule tableRule = shardingRule.getTableRule(each);
-            DataNode dataNode = tableRule.getActualDataNodes().get(0);
-            tableMappers.add(new RouteMapper(each, dataNode.getTableName()));
-            Set<String> currentDataSourceNames = tableRule.getActualDataNodes().stream().map(DataNode::getDataSourceName).collect(
-                    Collectors.toCollection(() -> new HashSet<>(tableRule.getActualDatasourceNames().size())));
-            if (first) {
-                availableDatasourceNames = currentDataSourceNames;
-                first = false;
-            } else {
-                availableDatasourceNames = Sets.intersection(availableDatasourceNames, currentDataSourceNames);
+            List<RouteMapper> tableMappers = new ArrayList<>(logicTables.size());
+            Set<String> availableDatasourceNames = null;
+            boolean first = true;
+            for (String each : logicTables) {
+                TableRule tableRule = shardingRule.getTableRule(each);
+                DataNode dataNode = tableRule.getActualDataNodes().get(0);
+                tableMappers.add(new RouteMapper(each, dataNode.getTableName()));
+                Set<String> currentDataSourceNames = new HashSet<>(tableRule.getActualDatasourceNames().size());
+                for (DataNode eachDataNode : tableRule.getActualDataNodes()) {
+                    currentDataSourceNames.add(eachDataNode.getDataSourceName());
+                }
+                if (first) {
+                    availableDatasourceNames = currentDataSourceNames;
+                    first = false;
+                } else {
+                    availableDatasourceNames = Sets.intersection(availableDatasourceNames, currentDataSourceNames);
+                }
             }
+            if (availableDatasourceNames.isEmpty()) {
+                throw new ShardingSphereConfigurationException("Cannot find actual datasource intersection for logic tables: %s", logicTables);
+            }
+            dataSourceName = getRandomDataSourceName(availableDatasourceNames);
+            routeContext.getRouteUnits().add(new RouteUnit(new RouteMapper(dataSourceName, dataSourceName), tableMappers));
         }
-        if (availableDatasourceNames.isEmpty()) {
-            throw new ShardingSphereConfigurationException("Cannot find actual datasource intersection for logic tables: %s", logicTables);
-        }
-        String dataSourceName = getRandomDataSourceName(availableDatasourceNames);
-        routeContext.getRouteUnits().add(new RouteUnit(new RouteMapper(dataSourceName, dataSourceName), tableMappers));
     }
     
     private String getRandomDataSourceName(final Collection<String> dataSourceNames) {

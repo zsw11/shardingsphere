@@ -18,7 +18,6 @@
 package org.apache.shardingsphere.shadow.rule;
 
 import lombok.Getter;
-import org.apache.shardingsphere.infra.rule.level.FeatureRule;
 import org.apache.shardingsphere.infra.rule.scope.SchemaRule;
 import org.apache.shardingsphere.shadow.api.config.ShadowRuleConfiguration;
 
@@ -29,7 +28,7 @@ import java.util.Map;
  * Databases shadow rule.
  */
 @Getter
-public final class ShadowRule implements FeatureRule, SchemaRule {
+public final class ShadowRule implements SchemaRule {
     
     private final Map<String, String> shadowMappings;
     

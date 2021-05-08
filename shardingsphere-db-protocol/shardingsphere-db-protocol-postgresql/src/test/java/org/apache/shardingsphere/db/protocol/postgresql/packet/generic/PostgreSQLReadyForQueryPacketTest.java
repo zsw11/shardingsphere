@@ -29,21 +29,10 @@ import static org.junit.Assert.assertThat;
 public final class PostgreSQLReadyForQueryPacketTest {
     
     @Test
-    public void assertReadWriteWithInTransaction() {
+    public void assertReadWrite() {
         ByteBuf byteBuf = ByteBufTestUtils.createByteBuf(1);
         PostgreSQLPacketPayload payload = new PostgreSQLPacketPayload(byteBuf);
-        PostgreSQLReadyForQueryPacket packet = new PostgreSQLReadyForQueryPacket(true);
-        assertThat(packet.getIdentifier(), is(PostgreSQLMessagePacketType.READY_FOR_QUERY));
-        packet.write(payload);
-        assertThat(byteBuf.writerIndex(), is(1));
-        assertThat(byteBuf.readByte(), is((byte) 'T'));
-    }
-    
-    @Test
-    public void assertReadWriteWithNotInTransaction() {
-        ByteBuf byteBuf = ByteBufTestUtils.createByteBuf(1);
-        PostgreSQLPacketPayload payload = new PostgreSQLPacketPayload(byteBuf);
-        PostgreSQLReadyForQueryPacket packet = new PostgreSQLReadyForQueryPacket(false);
+        PostgreSQLReadyForQueryPacket packet = new PostgreSQLReadyForQueryPacket();
         assertThat(packet.getIdentifier(), is(PostgreSQLMessagePacketType.READY_FOR_QUERY));
         packet.write(payload);
         assertThat(byteBuf.writerIndex(), is(1));

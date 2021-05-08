@@ -30,7 +30,7 @@ public final class PostgreSQLDoubleBinaryProtocolValue implements PostgreSQLBina
     }
     
     @Override
-    public Object read(final PostgreSQLPacketPayload payload, final int parameterValueLength) {
+    public Object read(final PostgreSQLPacketPayload payload) {
         return payload.getByteBuf().readDouble();
     }
     

@@ -32,8 +32,9 @@ public final class PostgreSQLBoolArrayBinaryProtocolValue implements PostgreSQLB
     }
     
     @Override
-    public Object read(final PostgreSQLPacketPayload payload, final int parameterValueLength) {
-        byte[] bytes = new byte[parameterValueLength];
+    public Object read(final PostgreSQLPacketPayload payload) {
+        payload.getByteBuf().readerIndex(payload.getByteBuf().readerIndex() - 4);
+        byte[] bytes = new byte[payload.readInt4()];
         payload.getByteBuf().readBytes(bytes);
         return ARRAY_PARAMETER_DECODER.decodeBoolArray(bytes, '{' != bytes[0]);
     }

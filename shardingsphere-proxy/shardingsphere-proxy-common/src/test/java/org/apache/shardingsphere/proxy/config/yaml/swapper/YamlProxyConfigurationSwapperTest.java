@@ -31,8 +31,8 @@ import org.apache.shardingsphere.proxy.config.YamlProxyConfiguration;
 import org.apache.shardingsphere.proxy.config.yaml.YamlDataSourceParameter;
 import org.apache.shardingsphere.proxy.config.yaml.YamlProxyRuleConfiguration;
 import org.apache.shardingsphere.proxy.config.yaml.YamlProxyServerConfiguration;
-import org.apache.shardingsphere.readwritesplitting.api.ReadwriteSplittingRuleConfiguration;
-import org.apache.shardingsphere.readwritesplitting.common.yaml.config.YamlReadwriteSplittingRuleConfiguration;
+import org.apache.shardingsphere.readwrite.splitting.api.ReadWriteSplittingRuleConfiguration;
+import org.apache.shardingsphere.readwrite.splitting.common.yaml.config.YamlReadWriteSplittingRuleConfiguration;
 import org.junit.Test;
 
 import java.util.Collection;
@@ -91,7 +91,7 @@ public final class YamlProxyConfigurationSwapperTest {
         assertThat(ruleConfigs.size(), is(1));
         RuleConfiguration ruleConfig = ruleConfigs.iterator().next();
         assertNotNull(ruleConfig);
-        assertThat(ruleConfig, instanceOf(ReadwriteSplittingRuleConfiguration.class));
+        assertThat(ruleConfig, instanceOf(ReadWriteSplittingRuleConfiguration.class));
     }
     
     private void assertProxyConfigurationProps(final ProxyConfiguration proxyConfig) {
@@ -182,7 +182,7 @@ public final class YamlProxyConfigurationSwapperTest {
     
     private void prepareRules(final YamlProxyRuleConfiguration yamlProxyRuleConfig) {
         Collection<YamlRuleConfiguration> rules = new LinkedList<>();
-        YamlRuleConfiguration testRuleConfig = new YamlReadwriteSplittingRuleConfiguration();
+        YamlRuleConfiguration testRuleConfig = new YamlReadWriteSplittingRuleConfiguration();
         rules.add(testRuleConfig);
         when(yamlProxyRuleConfig.getRules()).thenReturn(rules);
     }

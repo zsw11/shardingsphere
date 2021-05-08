@@ -39,7 +39,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.shardingsphere</groupId>
-            <artifactId>shardingsphere-readwrite-splitting-common</artifactId>
+            <artifactId>shardingsphere-read-write-splitting-common</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -59,7 +59,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.shardingsphere</groupId>
-            <artifactId>shardingsphere-infra-authority-common</artifactId>
+            <artifactId>shardingsphere-authority-common</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -67,4 +67,5 @@
             <artifactId>commons-dbcp2</artifactId>
         </dependency>
     </dependencies>
+    
 </project>

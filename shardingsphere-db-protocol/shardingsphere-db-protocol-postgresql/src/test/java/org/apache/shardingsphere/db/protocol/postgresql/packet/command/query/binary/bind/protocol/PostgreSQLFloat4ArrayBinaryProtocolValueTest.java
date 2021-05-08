@@ -18,11 +18,10 @@
 package org.apache.shardingsphere.db.protocol.postgresql.packet.command.query.binary.bind.protocol;
 
 import io.netty.buffer.ByteBuf;
+import java.nio.charset.StandardCharsets;
 import org.apache.shardingsphere.db.protocol.postgresql.packet.ByteBufTestUtils;
 import org.apache.shardingsphere.db.protocol.postgresql.payload.PostgreSQLPacketPayload;
 import org.junit.Test;
-
-import java.nio.charset.StandardCharsets;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertNotNull;
@@ -48,7 +47,7 @@ public final class PostgreSQLFloat4ArrayBinaryProtocolValueTest {
         byteBuf.writeCharSequence(parameterValue, StandardCharsets.ISO_8859_1);
         byteBuf.readInt();
         PostgreSQLPacketPayload payload = new PostgreSQLPacketPayload(byteBuf);
-        Object result = newInstance().read(payload, parameterValue.length());
+        Object result = newInstance().read(payload);
         assertNotNull(result);
         assertThat(result, is(new float[] {11.1F, 12.1F}));
         assertThat(byteBuf.readerIndex(), is(expectedLength));

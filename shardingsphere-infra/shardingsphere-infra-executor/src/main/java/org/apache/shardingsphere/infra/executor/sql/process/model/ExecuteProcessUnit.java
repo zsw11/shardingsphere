@@ -18,20 +18,16 @@
 package org.apache.shardingsphere.infra.executor.sql.process.model;
 
 import lombok.Getter;
-import org.apache.shardingsphere.infra.executor.sql.context.ExecutionUnit;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Execute process unit.
  */
+@RequiredArgsConstructor
 @Getter
 public final class ExecuteProcessUnit {
     
     private final String unitID;
     
     private final ExecuteProcessConstants status;
-    
-    public ExecuteProcessUnit(final ExecutionUnit executionUnit, final ExecuteProcessConstants status) {
-        this.unitID = String.valueOf(executionUnit.hashCode());
-        this.status = status;
-    }
 }

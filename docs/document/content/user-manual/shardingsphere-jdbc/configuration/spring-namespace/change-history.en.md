@@ -39,7 +39,7 @@ Please refer to [Built-in Load Balance Algorithm List](/en/user-manual/shardings
 
 ## 4.x
 
-### Readwrite-splitting
+### Read-Write Split
 
 #### Configuration Item Explanation
 
@@ -78,7 +78,7 @@ Namespace: [http://shardingsphere.apache.org/schema/shardingsphere/masterslave/m
 
 ## 3.x
 
-### Readwrite-splitting
+### Read-write splitting
 
 #### Configuration Item Explanation
 
@@ -152,7 +152,7 @@ Namespace: [http://shardingsphere.apache.org/schema/shardingsphere/masterslave/m
 
 ## 2.x
 
-### Readwrite-splitting
+### Read-write splitting
 
 #### The configuration example for Spring namespace
 
@@ -215,7 +215,7 @@ Namespace: [http://shardingsphere.apache.org/schema/shardingsphere/masterslave/m
         <property name="password" value=""/>
     </bean>
     
-    <!-- Readwrite-splitting DataSource Configuration -->
+    <!-- Read-write splitting DataSource Configuration -->
     <master-slave:data-source id="dbtbl_0" master-data-source-name="dbtbl_0_master" slave-data-source-names="dbtbl_0_slave_0, dbtbl_0_slave_1" strategy-type="ROUND_ROBIN" />
     <master-slave:data-source id="dbtbl_1" master-data-source-name="dbtbl_1_master" slave-data-source-names="dbtbl_1_slave_0, dbtbl_1_slave_1" strategy-type="ROUND_ROBIN" />
     
@@ -234,7 +234,7 @@ Namespace: [http://shardingsphere.apache.org/schema/shardingsphere/masterslave/m
 
 ## 1.x
 
-### Readwrite-splitting
+### Read-write splitting
 
 #### The configuration example for Spring namespace
 

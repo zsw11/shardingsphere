@@ -146,7 +146,7 @@ dataSources:
     maxLifetimeMilliseconds: 1800000
     maxPoolSize: 200
 rules:
-- !READWRITE_SPLITTING
+- !READ_WRITE_SPLITTING
   dataSources:
     pr_ds:
       name: pr_ds
@@ -260,7 +260,7 @@ rules:
       type: SNOWFLAKE
       props:
           worker-id: 123
-- !READWRITE_SPLITTING
+- !READ_WRITE_SPLITTING
   dataSources:
     pr_ds_0:
       writeDataSourceName: primary_ds_0

@@ -31,8 +31,9 @@ public final class PostgreSQLUnspecifiedBinaryProtocolValue implements PostgreSQ
     }
     
     @Override
-    public Object read(final PostgreSQLPacketPayload payload, final int parameterValueLength) {
-        byte[] bytes = new byte[parameterValueLength];
+    public Object read(final PostgreSQLPacketPayload payload) {
+        payload.getByteBuf().readerIndex(payload.getByteBuf().readerIndex() - 4);
+        byte[] bytes = new byte[payload.readInt4()];
         payload.getByteBuf().readBytes(bytes);
         String result = new String(bytes);
         return new PostgreSQLTypeUnspecifiedSQLParameter(result);

@@ -18,10 +18,10 @@
 package org.apache.shardingsphere.infra.executor.kernel.model;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Collection;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 
 /**
  * Execution group context.

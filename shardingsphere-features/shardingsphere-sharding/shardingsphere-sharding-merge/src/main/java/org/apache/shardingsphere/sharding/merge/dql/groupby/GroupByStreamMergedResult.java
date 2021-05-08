@@ -73,15 +73,11 @@ public final class GroupByStreamMergedResult extends OrderByStreamMergedResult {
     
     private boolean aggregateCurrentGroupByRowAndNext() throws SQLException {
         boolean result = false;
-        boolean cachedRow = false;
         Map<AggregationProjection, AggregationUnit> aggregationUnitMap = Maps.toMap(
                 selectStatementContext.getProjectionsContext().getAggregationProjections(), input -> AggregationUnitFactory.create(input.getType(), input instanceof AggregationDistinctProjection));
         while (currentGroupByValues.equals(new GroupByValue(getCurrentQueryResult(), selectStatementContext.getGroupByContext().getItems()).getGroupValues())) {
             aggregate(aggregationUnitMap);
-            if (!cachedRow) {
-                cacheCurrentRow();
-                cachedRow = true;
-            }
+            cacheCurrentRow();
             result = super.next();
             if (!result) {
                 break;

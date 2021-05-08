@@ -9,5 +9,7 @@ chapter = true
 
 This chapter mainly introduces the features of the distributed governance:
 
+* Config center
 * Registry center
+* Metadata center
 * Third-party components dependency

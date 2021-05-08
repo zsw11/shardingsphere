@@ -21,18 +21,14 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.eventbus.Subscribe;
-import org.apache.shardingsphere.governance.core.registry.listener.event.datasource.DataSourceAddedEvent;
-import org.apache.shardingsphere.governance.core.registry.listener.event.datasource.DataSourceAlteredEvent;
-import org.apache.shardingsphere.governance.core.registry.listener.event.invocation.ExecuteProcessSummaryReportEvent;
-import org.apache.shardingsphere.governance.core.registry.listener.event.invocation.ExecuteProcessUnitReportEvent;
-import org.apache.shardingsphere.governance.core.registry.listener.event.invocation.ShowProcessListRequestEvent;
-import org.apache.shardingsphere.governance.core.registry.listener.event.invocation.ShowProcessListResponseEvent;
-import org.apache.shardingsphere.governance.core.registry.listener.event.metadata.MetaDataCreatedEvent;
-import org.apache.shardingsphere.governance.core.registry.listener.event.metadata.MetaDataDroppedEvent;
-import org.apache.shardingsphere.governance.core.registry.listener.event.rule.RuleConfigurationCachedEvent;
-import org.apache.shardingsphere.governance.core.registry.listener.event.rule.RuleConfigurationsAlteredEvent;
-import org.apache.shardingsphere.governance.core.registry.listener.event.rule.SwitchRuleConfigurationEvent;
-import org.apache.shardingsphere.governance.core.registry.listener.event.scaling.StartScalingEvent;
+import org.apache.shardingsphere.governance.core.event.model.datasource.DataSourceAddedEvent;
+import org.apache.shardingsphere.governance.core.event.model.datasource.DataSourceAlteredEvent;
+import org.apache.shardingsphere.governance.core.event.model.metadata.MetaDataCreatedEvent;
+import org.apache.shardingsphere.governance.core.event.model.metadata.MetaDataDroppedEvent;
+import org.apache.shardingsphere.governance.core.event.model.rule.RuleConfigurationCachedEvent;
+import org.apache.shardingsphere.governance.core.event.model.rule.RuleConfigurationsAlteredEvent;
+import org.apache.shardingsphere.governance.core.event.model.rule.SwitchRuleConfigurationEvent;
+import org.apache.shardingsphere.governance.core.event.model.scaling.StartScalingEvent;
 import org.apache.shardingsphere.governance.core.lock.node.LockAck;
 import org.apache.shardingsphere.governance.core.lock.node.LockNode;
 import org.apache.shardingsphere.governance.core.registry.checker.RuleConfigurationChecker;
@@ -46,10 +42,6 @@ import org.apache.shardingsphere.governance.repository.api.RegistryRepository;
 import org.apache.shardingsphere.infra.config.RuleConfiguration;
 import org.apache.shardingsphere.infra.config.datasource.DataSourceConfiguration;
 import org.apache.shardingsphere.infra.eventbus.ShardingSphereEventBus;
-import org.apache.shardingsphere.infra.executor.sql.process.model.ExecuteProcessContext;
-import org.apache.shardingsphere.infra.executor.sql.process.model.ExecuteProcessUnit;
-import org.apache.shardingsphere.infra.executor.sql.process.model.yaml.YamlExecuteProcessContext;
-import org.apache.shardingsphere.infra.executor.sql.process.model.yaml.YamlExecuteProcessUnit;
 import org.apache.shardingsphere.infra.metadata.user.yaml.config.YamlUsersConfigurationConverter;
 import org.apache.shardingsphere.infra.metadata.mapper.event.dcl.impl.CreateUserStatementEvent;
 import org.apache.shardingsphere.infra.metadata.mapper.event.dcl.impl.GrantStatementEvent;
@@ -487,49 +479,6 @@ public final class RegistryCenter {
     }
     
     /**
-     * Load show process list data.
-     *
-     * @param event get children request event.
-     */
-    @Subscribe
-    public void loadShowProcessListData(final ShowProcessListRequestEvent event) {
-        List<String> childrenKeys = repository.getChildrenKeys(node.getExecutionNodesPath());
-        Collection<String> processListData = childrenKeys.stream().map(key -> repository.get(node.getExecutionPath(key))).collect(Collectors.toList());
-        ShardingSphereEventBus.getInstance().post(new ShowProcessListResponseEvent(processListData));
-    }
-    
-    /**
-     * Report execute process summary.
-     *
-     * @param event execute process summary report event.
-     */
-    @Subscribe
-    public void reportExecuteProcessSummary(final ExecuteProcessSummaryReportEvent event) {
-        ExecuteProcessContext executeProcessContext = event.getExecuteProcessContext();
-        repository.persist(node.getExecutionPath(executeProcessContext.getExecutionID()), YamlEngine.marshal(new YamlExecuteProcessContext(executeProcessContext)));
-    }
-    
-    /**
-     * Report execute process unit.
-     *
-     * @param event execute process unit report event.
-     */
-    @Subscribe
-    public void reportExecuteProcessUnit(final ExecuteProcessUnitReportEvent event) {
-        // TODO lock on the same jvm
-        event.getExecutionID().intern();
-        String executionPath = node.getExecutionPath(event.getExecutionID());
-        YamlExecuteProcessContext yamlExecuteProcessContext = YamlEngine.unmarshal(repository.get(executionPath), YamlExecuteProcessContext.class);
-        ExecuteProcessUnit executeProcessUnit = event.getExecuteProcessUnit();
-        for (YamlExecuteProcessUnit unit : yamlExecuteProcessContext.getUnitStatuses()) {
-            if (unit.getUnitID().equals(executeProcessUnit.getUnitID())) {
-                unit.setStatus(executeProcessUnit.getStatus());
-            }
-        }
-        repository.persist(executionPath, YamlEngine.marshal(yamlExecuteProcessContext));
-    }
-    
-    /**
      * Persist instance online.
      */
     public void persistInstanceOnline() {
@@ -631,20 +580,11 @@ public final class RegistryCenter {
     }
     
     /**
-     * Ack unlock.
+     * ack unlock.
      * 
      * @param lockName lock name
      */
     public void ackUnlock(final String lockName) {
-        repository.persistEphemeral(lockNode.getLockedAckNodePath(Joiner.on("-").join(instance.getInstanceId(), lockName)), LockAck.UNLOCKED.getValue());
-    }
-    
-    /**
-     * Delete lock ack.
-     * 
-     * @param lockName lock name
-     */
-    public void deleteLockAck(final String lockName) {
         repository.delete(lockNode.getLockedAckNodePath(Joiner.on("-").join(instance.getInstanceId(), lockName)));
     }
     

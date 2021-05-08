@@ -106,7 +106,7 @@ oidClause
     ;
 
 oidIndexClause
-    : OIDINDEX indexName? LP_ (physicalAttributesClause | TABLESPACE tablespaceName)* RP_
+    : OIDINDEX indexName? LP_ (physicalAttributesClause | TABLESPACE tablespaceName)+ RP_
     ;
 
 createRelationalTableClause
@@ -280,11 +280,7 @@ tableAlias
     ;
 
 alterDefinitionClause
-    : (alterTableProperties
-    | columnClauses
-    | constraintClauses
-    | alterTablePartitioning ((DEFERRED| IMMEDIATE) INVALIDATION)?
-    | alterExternalTable)?
+    : (alterTableProperties | columnClauses | constraintClauses | alterExternalTable | alterTablePartition)?
     ;
 
 alterTableProperties
@@ -304,11 +300,11 @@ operateColumnClause
     ;
 
 addColumnSpecification
-    : ADD LP_ columnOrVirtualDefinitions RP_ columnProperties?
+    : ADD columnOrVirtualDefinitions columnProperties?
     ;
 
 columnOrVirtualDefinitions
-    : columnOrVirtualDefinition (COMMA_ columnOrVirtualDefinition)* 
+    : LP_? columnOrVirtualDefinition (COMMA_ columnOrVirtualDefinition)* RP_? | columnOrVirtualDefinition
     ;
 
 columnOrVirtualDefinition
@@ -463,7 +459,7 @@ rebuildClause
     ;
 
 parallelClause
-    : NOPARALLEL | PARALLEL NUMBER_?
+    : PARALLEL
     ;
 
 usableSpecification
@@ -491,7 +487,7 @@ commitClause
     ;
 
 physicalProperties
-    : deferredSegmentCreation? segmentAttributesClause? tableCompression? inmemoryTableClause? ilmClause?
+    : deferredSegmentCreation? segmentAttributesClause tableCompression? inmemoryTableClause? ilmClause?
     | deferredSegmentCreation? (organizationClause?|externalPartitionClause?)
     | clusterClause
     ;
@@ -501,9 +497,9 @@ deferredSegmentCreation
     ;
 
 segmentAttributesClause
-    : ( physicalAttributesClause
+    : physicalAttributesClause
     | (TABLESPACE tablespaceName | TABLESPACE SET tablespaceSetName)
-    | loggingClause)+
+    | loggingClause
     ;
 
 physicalAttributesClause
@@ -688,7 +684,7 @@ tablePartitioningClauses
 rangePartitions
     : PARTITION BY RANGE columnNames
       (INTERVAL LP_ expr RP_ (STORE IN LP_ tablespaceName (COMMA_ tablespaceName)* RP_)?)?
-      LP_ PARTITION partitionName? rangeValuesClause tablePartitionDescription (COMMA_ PARTITION partitionName? rangeValuesClause tablePartitionDescription externalPartSubpartDataProps?)* RP_
+      LP_ PARTITION partition? rangeValuesClause tablePartitionDescription (COMMA_ PARTITION partition? rangeValuesClause tablePartitionDescription externalPartSubpartDataProps?)* RP_
     ;
 
 rangeValuesClause
@@ -770,7 +766,7 @@ externalPartSubpartDataProps
 listPartitions
     : PARTITION BY LIST columnNames
       (AUTOMATIC (STORE IN LP_? tablespaceName (COMMA_ tablespaceName)* RP_?))?
-      LP_ PARTITION partitionName? listValuesClause tablePartitionDescription (COMMA_ PARTITION partitionName? listValuesClause tablePartitionDescription externalPartSubpartDataProps?)* RP_
+      LP_ PARTITION partition? listValuesClause tablePartitionDescription (COMMA_ PARTITION partition? listValuesClause tablePartitionDescription externalPartSubpartDataProps?)* RP_
     ;
 
 listValuesClause
@@ -799,7 +795,7 @@ advancedIndexCompression
     ;
 
 individualHashPartitions
-    : LP_? (PARTITION partitionName? readOnlyClause? indexingClause? partitioningStorageClause?) (COMMA_ PARTITION partitionName? readOnlyClause? indexingClause? partitioningStorageClause?)* RP_?
+    : LP_? (PARTITION partition? readOnlyClause? indexingClause? partitioningStorageClause?) (COMMA_ PARTITION partition? readOnlyClause? indexingClause? partitioningStorageClause?)* RP_?
     ;
 
 partitioningStorageClause
@@ -884,7 +880,7 @@ referencePartitioning
     ;
 
 referencePartitionDesc
-    : PARTITION partitionName? tablePartitionDescription?
+    : PARTITION partition? tablePartitionDescription?
     ;
 
 constraint
@@ -963,7 +959,7 @@ alterSynonym
     : ALTER PUBLIC? SYNONYM (schemaName DOT_)? synonymName (COMPILE | EDITIONABLE | NONEDITIONABLE)
     ;
 
-alterTablePartitioning
+alterTablePartition
     : addTablePartition | dropTablePartition
     ;
 
@@ -984,53 +980,11 @@ addListPartitionClause
     ;
 
 dropTablePartition
-    : DROP partitionExtendedNames (updateIndexClauses parallelClause?)?
+    : DROP partitionExtendedNames
     ;
 
 partitionExtendedNames
-    : (PARTITION | PARTITIONS) (partitionName | partitionForClauses) (COMMA_ (partitionName | partitionForClauses))*
-    ;
-
-partitionForClauses
-    : FOR LP_ partitionKeyValue (COMMA_ partitionKeyValue)* RP_
-    ;
-
-updateIndexClauses
-    : updateGlobalIndexClause | updateAllIndexesClause
-    ;
-
-updateGlobalIndexClause
-    : (UPDATE | INVALIDATE) GLOBAL INDEXES
-    ;
-
-updateAllIndexesClause
-    : UPDATE INDEXES
-    (LP_ indexName LP_ (updateIndexPartition | updateIndexSubpartition) RP_
-    (COMMA_ indexName LP_ (updateIndexPartition | updateIndexSubpartition) RP_)* RP_)?
-    ;
-
-updateIndexPartition
-    : indexPartitionDesc indexSubpartitionClause?
-    (COMMA_ indexPartitionDesc indexSubpartitionClause?)*
-    ;
-
-indexPartitionDesc
-    : PARTITION
-    (partitionName
-    ((segmentAttributesClause | indexCompression)+ | PARAMETERS LP_ SQ_ odciParameters SQ_ RP_ )?
-    usableSpecification?
-    )?
-    ;
-
-indexSubpartitionClause
-    : STORE IN LP_ tablespaceName (COMMA_ tablespaceName)* RP_
-    | LP_ SUBPARTITION subpartitionName? (TABLESPACE tablespaceName)? indexCompression? usableSpecification?
-    (COMMA_ SUBPARTITION subpartitionName? (TABLESPACE tablespaceName)? indexCompression? usableSpecification?)* RP_
-    ;
-
-updateIndexSubpartition
-    : SUBPARTITION subpartitionName? (TABLESPACE tablespaceName)?
-    (COMMA_ SUBPARTITION subpartitionName? (TABLESPACE tablespaceName)?)*
+    : (PARTITION | PARTITIONS) partition
     ;
 
 supplementalLoggingProps
@@ -1038,386 +992,9 @@ supplementalLoggingProps
     ;
 
 supplementalLogGrpClause
-    : GROUP logGroupName LP_ columnName (NO LOG)? (COMMA_ columnName (NO LOG)?)* RP_ ALWAYS?
+    : GROUP logGroupName LP_ columnName (NO LOG)? (COMMA columnName (NO LOG)?)* RP_ ALWAYS?
     ;
 
 supplementalIdKeyClause
-    : DATA LP_ (ALL | PRIMARY KEY | UNIQUE | FOREIGN KEY) (COMMA_ (ALL | PRIMARY KEY | UNIQUE | FOREIGN KEY))* RP_ COLUMNS
-    ;
-
-alterSession
-    : ALTER SESSION alterSessionOption
-    ;
-
-alterSessionOption
-    : adviseClause
-    | closeDatabaseLinkClause
-    | commitInProcedureClause
-    | securiyClause
-    | parallelExecutionClause
-    | resumableClause
-    | shardDdlClause
-    | syncWithPrimaryClause
-    | alterSessionSetClause
-    ;
-
-adviseClause
-    : ADVISE (COMMIT | ROLLBACK | NOTHING)
-    ;
-
-closeDatabaseLinkClause
-    : CLOSE DATABASE LINK dbLink
-    ;
-
-commitInProcedureClause
-    : (ENABLE | DISABLE) COMMIT IN PROCEDURE
-    ;
-
-securiyClause
-    : (ENABLE | DISABLE) GUARD
-    ;
-
-parallelExecutionClause
-    : (ENABLE | DISABLE | FORCE) PARALLEL (DML | DDL | QUERY) (PARALLEL numberLiterals)?
-    ;
-
-resumableClause
-    : enableResumableClause | disableResumableClause
-    ;
-
-enableResumableClause
-    : ENABLE RESUMABLE (TIMEOUT numberLiterals)? (NAME stringLiterals)?
-    ;
-
-disableResumableClause
-    : DISABLE RESUMABLE
-    ;
-
-shardDdlClause
-    : (ENABLE | DISABLE) SHARD DDL
-    ;
-
-syncWithPrimaryClause
-    : SYNC WITH PRIMARY
-    ;
-
-alterSessionSetClause
-    : SET alterSessionSetClauseOption
-    ;
-
-alterSessionSetClauseOption
-    : parameterClause
-    | editionClause
-    | containerClause
-    | rowArchivalVisibilityClause
-    | defaultCollationClause
-    ;
-
-parameterClause
-    : (parameterName EQ_ parameterValue)+
-    ;
-
-editionClause
-    : EDITION EQ_ editionName
-    ;
-
-containerClause
-    : CONTAINER EQ_ containerName (SERVICE EQ_ serviceName)?
-    ;
-
-rowArchivalVisibilityClause
-    : ROW ARCHIVAL VISIBILITY EQ_ (ACTIVE | ALL)
-    ;
-
-defaultCollationClause
-    : DEFAULT_COLLATION EQ_ (collationName | NONE)
-    ;
-
-alterDatabase
-    : ALTER databaseClauses
-    ( startupClauses
-    | recoveryClauses
-    | databaseFileClauses
-    | logfileClauses
-    | controlfileClauses
-    | standbyDatabaseClauses
-    | defaultSettingsClauses
-    | instanceClauses
-    | securityClause
-    | prepareClause
-    | dropMirrorCopy
-    | lostWriteProtection
-    | cdbFleetClauses
-    | propertyClause )
-    ;
-
-databaseClauses
-    : DATABASE databaseName | PLUGGABLE DATABASE pdbName
-    ;
-
-startupClauses
-    : MOUNT ((STANDBY | CLONE) DATABASE)?
-    | OPEN ((READ WRITE)? (RESETLOGS | NORESETLOGS)? (UPGRADE | DOWNGRADE)? | READ ONLY)
-    ;
-
-recoveryClauses
-    : generalRecovery | managedStandbyRecovery | BEGIN BACKUP | END BACKUP
-    ;
-
-generalRecovery
-    : RECOVER (AUTOMATIC)? (FROM locationName)? (
-      (fullDatabaseRecovery | partialDatabaseRecovery | LOGFILE fileName)
-      ((TEST | ALLOW NUMBER_ CORRUPTION | parallelClause)+)?
-    | CONTINUE DEFAULT?
-    | CANCEL
-    )
-    ;
-
-fullDatabaseRecovery
-    : STANDBY? DATABASE
-    ((UNTIL (CANCEL | TIME dateValue | CHANGE NUMBER_ | CONSISTENT)
-    | USING BACKUP CONTROLFILE
-    | SNAPSHOT TIME dateValue
-    )+)?
-    ;
-
-partialDatabaseRecovery
-    : TABLESPACE tablespaceName (COMMA_ tablespaceName)*
-    | DATAFILE (fileName | fileNumber) (COMMA_ (fileName | fileNumber))*
-    ;
-
-managedStandbyRecovery
-    : RECOVER (MANAGED STANDBY DATABASE
-    ((USING ARCHIVED LOGFILE | DISCONNECT (FROM SESSION)?
-    | NODELAY
-    | UNTIL CHANGE NUMBER_
-    | UNTIL CONSISTENT | USING INSTANCES (ALL | NUMBER_) | parallelClause)+
-    | FINISH | CANCEL)?
-    | TO LOGICAL STANDBY (databaseName | KEEP IDENTITY))
-    ;
-
-databaseFileClauses
-    : RENAME FILE fileName (COMMA_ fileName)* TO fileName
-    | createDatafileClause
-    | alterDatafileClause
-    | alterTempfileClause
-    | moveDatafileClause
-    ;
-
-createDatafileClause
-    : CREATE DATAFILE (fileName | fileNumber) (COMMA_ (fileName | fileNumber))*
-    ( AS (fileSpecification (COMMA_ fileSpecification)* | NEW))?
-    ;
-
-fileSpecification
-    : datafileTempfileSpec | redoLogFileSpec
-    ;
-
-datafileTempfileSpec
-    : (fileName | asmFileName )? (SIZE sizeClause)? REUSE? autoextendClause?
-    ;
-
-autoextendClause
-    : AUTOEXTEND (OFF | ON (NEXT sizeClause)? maxsizeClause?)
-    ;
-
-redoLogFileSpec
-    : ((fileName | asmFileName)
-    | LP_ (fileName | asmFileName) (COMMA_ (fileName | asmFileName))* RP_)?
-    (SIZE sizeClause)? (BLOCKSIZE sizeClause)? REUSE?
-    ;
-
-alterDatafileClause
-    : DATAFILE (fileName | NUMBER_) (COMMA_ (fileName | NUMBER_))*
-    (ONLINE | OFFLINE (FOR DROP)? | RESIZE sizeClause | autoextendClause | END BACKUP | ENCRYPT | DECRYPT)
-    ;
-
-alterTempfileClause
-    : TEMPFILE (fileName | NUMBER_) (COMMA_ (fileName | NUMBER_))*
-    (RESIZE sizeClause | autoextendClause | DROP (INCLUDING DATAFILES)? | ONLINE | OFFLINE)
-    ;
-
-logfileClauses
-    : ((ARCHIVELOG MANUAL? | NOARCHIVELOG )
-    | NO? FORCE LOGGING
-    | SET STANDBY NOLOGGING FOR (DATA AVAILABILITY | LOAD PERFORMANCE)
-    | RENAME FILE fileName (COMMA_ fileName)* TO fileName
-    | CLEAR UNARCHIVED? LOGFILE logfileDescriptor (COMMA_ logfileDescriptor)* (UNRECOVERABLE DATAFILE)?
-    | addLogfileClauses
-    | dropLogfileClauses
-    | switchLogfileClause
-    | supplementalDbLogging)
-    ;
-
-logfileDescriptor
-    : GROUP NUMBER_ | LP_ fileName (COMMA_ fileName)* RP_ | fileName
-    ;
-
-addLogfileClauses
-    : ADD STANDBY? LOGFILE
-    (((INSTANCE instanceName)? | (THREAD SQ_ NUMBER_ SQ_)?)
-    (GROUP NUMBER_)? redoLogFileSpec (COMMA_ (GROUP NUMBER_)? redoLogFileSpec)*
-    | MEMBER fileName REUSE? (COMMA_ fileName REUSE?)* TO logfileDescriptor (COMMA_ logfileDescriptor)*)
-    ;
-
-controlfileClauses
-    : CREATE ((LOGICAL | PHYSICAL)? STANDBY | FAR SYNC INSTANCE) CONTROLFILE AS fileName REUSE?
-    | BACKUP CONTROLFILE TO (fileName REUSE? | traceFileClause)
-    ;
-
-traceFileClause
-    : TRACE (AS fileName REUSE?)? (RESETLOGS | NORESETLOGS)?
-    ;
-
-dropLogfileClauses
-    : DROP STANDBY? LOGFILE
-    (logfileDescriptor (COMMA_ logfileDescriptor)*
-    | MEMBER fileName (COMMA_ fileName)*)
-    ;
-
-switchLogfileClause
-    : SWITCH ALL LOGFILES TO BLOCKSIZE NUMBER_
-    ;
-
-supplementalDbLogging
-    : (ADD | DROP) SUPPLEMENTAL LOG
-    ( DATA
-    | supplementalIdKeyClause
-    | supplementalPlsqlClause
-    | supplementalSubsetReplicationClause)
-    ;
-
-supplementalPlsqlClause
-    : DATA FOR PROCEDURAL REPLICATION
-    ;
-
-supplementalSubsetReplicationClause
-    : DATA SUBSET DATABASE REPLICATION
-    ;
-
-standbyDatabaseClauses
-    : ((activateStandbyDbClause
-    | maximizeStandbyDbClause
-    | registerLogfileClause
-    | commitSwitchoverClause
-    | startStandbyClause
-    | stopStandbyClause
-    | convertDatabaseClause) parallelClause?)
-    | (switchoverClause | failoverClause)
-    ;
-
-activateStandbyDbClause
-    : ACTIVATE (PHYSICAL | LOGICAL)? STANDBY DATABASE (FINISH APPLY)?
-    ;
-
-maximizeStandbyDbClause
-    : SET STANDBY DATABASE TO MAXIMIZE (PROTECTION | AVAILABILITY | PERFORMANCE)
-    ;
-
-registerLogfileClause
-    : REGISTER (OR REPLACE)? (PHYSICAL | LOGICAL)? LOGFILE fileSpecification (COMMA_ fileSpecification)* (FOR logminerSessionName)?
-    ;
-
-commitSwitchoverClause
-    : (PREPARE | COMMIT) TO SWITCHOVER
-    ( TO (((PHYSICAL | LOGICAL)? PRIMARY | PHYSICAL? STANDBY) ((WITH | WITHOUT) SESSION SHUTDOWN (WAIT | NOWAIT))?
-    | LOGICAL STANDBY)
-    | CANCEL
-    )?
-    ;
-
-startStandbyClause
-    : START LOGICAL STANDBY APPLY IMMEDIATE? NODELAY? (NEW PRIMARY dbLink | INITIAL scnValue? | (SKIP_SYMBOL FAILED TRANSACTION | FINISH))?
-    ;
-
-scnValue
-    : literals
-    ;
-
-stopStandbyClause
-    : (STOP | ABORT) LOGICAL STANDBY APPLY
-    ;
-
-switchoverClause
-    : SWITCHOVER TO databaseName (VERIFY | FORCE)?
-    ;
-
-convertDatabaseClause
-    : CONVERT TO (PHYSICAL | SNAPSHOT) STANDBY
-    ;
-
-failoverClause
-    : FAILOVER TO databaseName FORCE?
-    ;
-
-defaultSettingsClauses
-    : DEFAULT EDITION EQ_ editionName
-    | SET DEFAULT (BIGFILE | SMALLFILE) TABLESPACE
-    | DEFAULT TABLESPACE tablespaceName
-    | DEFAULT LOCAL? TEMPORARY TABLESPACE (tablespaceName | tablespaceGroupName)
-    | RENAME GLOBAL_NAME TO databaseName DO_ domain (DQ_ domain)*
-    | ENABLE BLOCK CHANGE TRACKING (USING FILE fileName REUSE?)?
-    | DISABLE BLOCK CHANGE TRACKING
-    | NO? FORCE FULL DATABASE CACHING
-    | CONTAINERS DEFAULT TARGET EQ_ (LP_ containerName RP_ | NONE)
-    | flashbackModeClause
-    | undoModeClause
-    | setTimeZoneClause
-    ;
-
-setTimeZoneClause
-    : SET TIME_ZONE EQ_ SQ_ ( (PLUS_ | MINUS_) dateValue  | timeZoneRegion ) SQ_
-    ;
-
-timeZoneRegion
-    : STRING_
-    ;
-
-flashbackModeClause
-    : FLASHBACK (ON | OFF)
-    ;
-
-undoModeClause
-    : LOCAL UNDO (ON | OFF)
-    ;
-
-moveDatafileClause
-    : MOVE DATAFILE LP_ (fileName | asmFileName | fileNumber) RP_
-    (TO LP_ (fileName | asmFileName) RP_ )? REUSE? KEEP?
-    ;
-
-instanceClauses
-    : (ENABLE | DISABLE) INSTANCE instanceName
-    ;
-
-securityClause
-    : GUARD (ALL | STANDBY | NONE)
-    ;
-
-prepareClause
-    : PREPARE MIRROR COPY copyName (WITH (UNPROTECTED | MIRROR | HIGH) REDUNDANCY)?
-    ;
-
-dropMirrorCopy
-    : DROP MIRROR COPY mirrorName
-    ;
-
-lostWriteProtection
-    : (ENABLE | DISABLE | REMOVE | SUSPEND)? LOST WRITE PROTECTION
-    ;
-
-cdbFleetClauses
-    : leadCdbClause | leadCdbUriClause
-    ;
-
-leadCdbClause
-    : SET LEAD_CDB EQ_  (TRUE | FALSE)
-    ;
-
-leadCdbUriClause
-    : SET LEAD_CDB_URI EQ_ uriString
-    ;
-
-propertyClause
-    : PROPERTY (SET | REMOVE) DEFAULT_CREDENTIAL EQ_ qualifiedCredentialName
+    : DATA LP_ (ALL | PRIMARY KEY | UNIQUE | FOREIGN KEY) (COMMA (ALL | PRIMARY KEY | UNIQUE | FOREIGN KEY))* RP_ COLUMNS
     ;

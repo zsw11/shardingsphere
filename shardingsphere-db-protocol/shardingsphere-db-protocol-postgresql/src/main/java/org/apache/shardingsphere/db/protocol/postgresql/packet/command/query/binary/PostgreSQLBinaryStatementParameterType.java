@@ -26,8 +26,9 @@ import org.apache.shardingsphere.db.protocol.postgresql.constant.PostgreSQLBinar
  */
 @RequiredArgsConstructor
 @Getter
-// TODO merge this class and PostgreSQLBinaryColumnType, remove PostgreSQLBinaryStatementParameterType
 public final class PostgreSQLBinaryStatementParameterType {
     
     private final PostgreSQLBinaryColumnType columnType;
+    
+    private final int format = 1;
 }

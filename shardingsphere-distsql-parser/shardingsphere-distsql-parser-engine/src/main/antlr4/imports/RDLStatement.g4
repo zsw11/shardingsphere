@@ -59,20 +59,8 @@ password
     : IDENTIFIER | INT | STRING
     ;
 
-createShardingTableRule
-    : CREATE SHARDING TABLE RULE shardingTableRuleDefinition (COMMA shardingTableRuleDefinition)*
-    ;
-
-createShardingBindingTableRules
-    : CREATE SHARDING BINDING TABLE RULES LP bindTableRulesDefinition (COMMA bindTableRulesDefinition)* RP
-    ;
-
-bindTableRulesDefinition
-    : LP tableName (COMMA tableName)* RP
-    ;
-
-createShardingBroadcastTableRules
-    : CREATE SHARDING BROADCAST TABLE RULES LP IDENTIFIER (COMMA IDENTIFIER)* RP
+createShardingRule
+    : CREATE SHARDING RULE LP shardingTableRuleDefinition (COMMA shardingTableRuleDefinition)* bindingTables? defaultTableStrategy? broadcastTables? RP
     ;
 
 alterShardingRule
@@ -84,7 +72,7 @@ createReplicaQueryRule
     ;
 
 replicaQueryRuleDefinition
-    : ruleName LP PRIMARY EQ primary=schemaName COMMA REPLICA EQ schemaNames RP functionDefinition
+    : ruleName=IDENTIFIER LP PRIMARY EQ primary=schemaName COMMA REPLICA EQ schemaNames RP functionDefinition
     ;
 
 alterReplicaQueryRule
@@ -92,7 +80,7 @@ alterReplicaQueryRule
     ;
 
 alterReplicaQueryRuleDefinition
-    : (MODIFY | ADD) ruleName LP PRIMARY EQ primary=schemaName COMMA REPLICA EQ schemaNames RP functionDefinition?
+    : (MODIFY | ADD) ruleName=IDENTIFIER LP PRIMARY EQ primary=schemaName COMMA REPLICA EQ schemaNames RP functionDefinition?
     ;
 
 alterShardingTableRuleDefinition
@@ -100,15 +88,11 @@ alterShardingTableRuleDefinition
     ;
 
 shardingTableRuleDefinition
-    : tableName LP resources (COMMA shardingColumn)? (COMMA functionDefinition)? (COMMA keyGenerateStrategy)? RP
+    : tableName resources? (columnName functionDefinition)? keyGenerateStrategy?
     ;
 
 resources
-    : RESOURCES LP IDENTIFIER (COMMA IDENTIFIER)* RP
-    ;
-
-shardingColumn
-    : SHARDING_COLUMN EQ columnName
+    : RESOURCE LP IDENTIFIER (COMMA IDENTIFIER)* RP
     ;
 
 alterBindingTables
@@ -136,15 +120,11 @@ broadcastTables
     ;
 
 keyGenerateStrategy
-    : GENERATED_KEY LP COLUMN EQ columnName COMMA functionDefinition RP
+    : GENERATED_KEY columnName functionDefinition
     ;
 
 actualDataNodes
     : STRING (COMMA STRING)*
-    ;
-
-ruleName
-    : IDENTIFIER
     ;
 
 tableName
@@ -180,11 +160,7 @@ schemaName
     ;
 
 functionDefinition
-    : TYPE LP NAME EQ functionName COMMA PROPERTIES LP algorithmProperties? RP RP
-    ;
-
-functionName
-    : IDENTIFIER
+    : functionName=IDENTIFIER LP algorithmProperties? RP
     ;
 
 algorithmProperties
@@ -192,5 +168,5 @@ algorithmProperties
     ;
 
 algorithmProperty
-    : key=(IDENTIFIER | STRING) EQ value=(NUMBER | INT | STRING)
+    : key=IDENTIFIER EQ value=(NUMBER | INT | STRING)
     ;

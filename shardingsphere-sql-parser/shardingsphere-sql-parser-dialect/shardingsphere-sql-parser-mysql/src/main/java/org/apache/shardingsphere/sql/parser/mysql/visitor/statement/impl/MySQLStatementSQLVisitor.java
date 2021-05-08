@@ -463,22 +463,38 @@ public abstract class MySQLStatementSQLVisitor extends MySQLStatementBaseVisitor
         return new BinaryOperationExpression(ctx.start.getStartIndex(), ctx.stop.getStopIndex(), left, right, operator, text);
     }
     
+    private ExpressionSegment createLiteralExpression(final LiteralsContext context) {
+        ASTNode astNode = visit(context);
+        if (astNode instanceof StringLiteralValue) {
+            return new LiteralExpressionSegment(context.start.getStartIndex(), context.stop.getStopIndex(), ((StringLiteralValue) astNode).getValue());
+        }
+        if (astNode instanceof NumberLiteralValue) {
+            return new LiteralExpressionSegment(context.start.getStartIndex(), context.stop.getStopIndex(), ((NumberLiteralValue) astNode).getValue());
+        }
+        if (astNode instanceof BooleanLiteralValue) {
+            return new LiteralExpressionSegment(context.start.getStartIndex(), context.stop.getStopIndex(), ((BooleanLiteralValue) astNode).getValue());
+        }
+        if (astNode instanceof OtherLiteralValue) {
+            return new CommonExpressionSegment(context.getStart().getStartIndex(), context.getStop().getStopIndex(), ((OtherLiteralValue) astNode).getValue());
+        }
+        return new CommonExpressionSegment(context.getStart().getStartIndex(), context.getStop().getStopIndex(),
+                context.start.getInputStream().getText(new Interval(context.start.getStartIndex(), context.stop.getStopIndex())));
+    }
+    
     @Override
     public final ASTNode visitSimpleExpr(final SimpleExprContext ctx) {
-        int startIndex = ctx.start.getStartIndex();
-        int stopIndex = ctx.stop.getStopIndex();
         if (null != ctx.subquery()) {
             SubquerySegment subquerySegment = new SubquerySegment(ctx.subquery().getStart().getStartIndex(), ctx.subquery().getStop().getStopIndex(), (MySQLSelectStatement) visit(ctx.subquery()));
             if (null != ctx.EXISTS()) {
-                return new ExistsSubqueryExpression(startIndex, stopIndex, subquerySegment);
+                return new ExistsSubqueryExpression(ctx.start.getStartIndex(), ctx.stop.getStopIndex(), subquerySegment);
             }
             return new SubqueryExpressionSegment(subquerySegment);
         }
         if (null != ctx.parameterMarker()) {
-            return new ParameterMarkerExpressionSegment(startIndex, stopIndex, ((ParameterMarkerValue) visit(ctx.parameterMarker())).getValue());
+            return new ParameterMarkerExpressionSegment(ctx.start.getStartIndex(), ctx.stop.getStopIndex(), ((ParameterMarkerValue) visit(ctx.parameterMarker())).getValue());
         }
         if (null != ctx.literals()) {
-            return SQLUtil.createLiteralExpression(visit(ctx.literals()), startIndex, stopIndex, ctx.literals().start.getInputStream().getText(new Interval(startIndex, stopIndex)));
+            return createLiteralExpression(ctx.literals());
         }
         if (null != ctx.intervalExpression()) {
             return visit(ctx.intervalExpression());
@@ -498,7 +514,7 @@ public abstract class MySQLStatementSQLVisitor extends MySQLStatementBaseVisitor
                 ((ExistsSubqueryExpression) expression).setNot(true);
                 return expression;
             }
-            return new NotExpression(startIndex, stopIndex, (ExpressionSegment) expression);
+            return new NotExpression(ctx.start.getStartIndex(), ctx.stop.getStopIndex(), (ExpressionSegment) expression);
         }
         if (null != ctx.LP_() && 1 == ctx.expr().size()) {
             return visit(ctx.expr(0));

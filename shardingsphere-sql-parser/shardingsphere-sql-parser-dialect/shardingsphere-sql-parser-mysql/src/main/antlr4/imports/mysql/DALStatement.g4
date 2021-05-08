@@ -158,10 +158,6 @@ showEngines
     : SHOW STORAGE? ENGINES
     ;
 
-showCharset
-    : SHOW CHARSET
-    ;
-    
 showErrors
     : SHOW (COUNT LP_ ASTERISK_ RP_)? ERRORS (LIMIT (NUMBER_ COMMA_)? NUMBER_)?
     ;
@@ -429,7 +425,6 @@ show
     | showCreateView
     | showEngine
     | showEngines
-    | showCharset
     | showErrors
     | showEvents
     | showFunctionCode

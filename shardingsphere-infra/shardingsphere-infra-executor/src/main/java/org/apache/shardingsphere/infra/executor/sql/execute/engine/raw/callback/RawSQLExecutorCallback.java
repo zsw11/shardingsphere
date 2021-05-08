@@ -19,11 +19,8 @@ package org.apache.shardingsphere.infra.executor.sql.execute.engine.raw.callback
 
 import com.google.common.base.Preconditions;
 import org.apache.shardingsphere.infra.executor.kernel.model.ExecutorCallback;
-import org.apache.shardingsphere.infra.executor.sql.execute.engine.SQLExecutionUnit;
 import org.apache.shardingsphere.infra.executor.sql.execute.engine.raw.RawSQLExecutionUnit;
 import org.apache.shardingsphere.infra.executor.sql.execute.result.ExecuteResult;
-import org.apache.shardingsphere.infra.executor.sql.process.ExecuteProcessEngine;
-import org.apache.shardingsphere.infra.executor.sql.process.model.ExecuteProcessConstants;
 import org.apache.shardingsphere.infra.spi.ShardingSphereServiceLoader;
 
 import java.sql.SQLException;
@@ -50,16 +47,6 @@ public final class RawSQLExecutorCallback implements ExecutorCallback<RawSQLExec
     @SuppressWarnings("unchecked")
     @Override
     public Collection<ExecuteResult> execute(final Collection<RawSQLExecutionUnit> inputs, final boolean isTrunkThread, final Map<String, Object> dataMap) throws SQLException {
-        Collection<ExecuteResult> result = callbacks.iterator().next().execute(inputs, isTrunkThread, dataMap);
-        for (RawSQLExecutionUnit each : inputs) {
-            finishReport(dataMap, each);
-        }
-        return result;
-    }
-    
-    private void finishReport(final Map<String, Object> dataMap, final SQLExecutionUnit executionUnit) {
-        if (dataMap.containsKey(ExecuteProcessConstants.EXECUTE_ID.name())) {
-            ExecuteProcessEngine.finish(dataMap.get(ExecuteProcessConstants.EXECUTE_ID.name()).toString(), executionUnit);
-        }
+        return callbacks.iterator().next().execute(inputs, isTrunkThread, dataMap);
     }
 }

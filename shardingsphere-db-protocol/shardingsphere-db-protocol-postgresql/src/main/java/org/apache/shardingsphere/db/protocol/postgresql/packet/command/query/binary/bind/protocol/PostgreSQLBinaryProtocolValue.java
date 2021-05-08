@@ -36,10 +36,9 @@ public interface PostgreSQLBinaryProtocolValue {
      * Read binary protocol value.
      *
      * @param payload payload operation for PostgreSQL packet
-     * @param parameterValueLength parameter value length
      * @return binary value result
      */
-    Object read(PostgreSQLPacketPayload payload, int parameterValueLength);
+    Object read(PostgreSQLPacketPayload payload);
     
     /**
      * Write binary protocol value.
