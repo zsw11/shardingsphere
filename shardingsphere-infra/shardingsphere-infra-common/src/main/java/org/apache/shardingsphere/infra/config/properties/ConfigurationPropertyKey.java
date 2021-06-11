@@ -54,11 +54,6 @@ public enum ConfigurationPropertyKey implements TypedPropertyKey {
     CHECK_TABLE_METADATA_ENABLED("check-table-metadata-enabled", String.valueOf(Boolean.FALSE), boolean.class),
     
     /**
-     * Whether query with cipher column for data encrypt.
-     */
-    QUERY_WITH_CIPHER_COLUMN("query-with-cipher-column", String.valueOf(Boolean.TRUE), boolean.class),
-    
-    /**
      * Frontend database protocol type for ShardingSphere-Proxy.
      */
     PROXY_FRONTEND_DATABASE_PROTOCOL_TYPE("proxy-frontend-database-protocol-type", "", String.class),
@@ -117,6 +112,11 @@ public enum ConfigurationPropertyKey implements TypedPropertyKey {
      * Whether enable hint for ShardingSphere-Proxy.
      */
     PROXY_HINT_ENABLED("proxy-hint-enabled", String.valueOf(Boolean.FALSE), boolean.class),
+    
+    /**
+     * Whether enable show process list.
+     */
+    SHOW_PROCESS_LIST_ENABLED("show-process-list-enabled", String.valueOf(false), boolean.class),
     
     /**
      * The length of time in milliseconds an SQL waits for a global lock before giving up.

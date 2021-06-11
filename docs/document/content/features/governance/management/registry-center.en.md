@@ -15,20 +15,20 @@ weight = 1
 
 ## Data Structure in Registry Center
 
-Under defined namespace, `users`, `props` and `metadata` nodes persist in YAML, modifying nodes can dynamically refresh configurations. `states` node persist the runtime node of database access object, to distinguish different database access instances.
+Under defined namespace, `rules`, `props` and `metadata` nodes persist in YAML, modifying nodes can dynamically refresh configurations. `states` node persist the runtime node of database access object, to distinguish different database access instances.
 
 ```
 namespace
-   ├──users                                     # Users configuration
+   ├──rules                                     # Global rule configuration
    ├──props                                     # Properties configuration
    ├──metadata                                  # Metadata configuration
    ├      ├──${schema_1}                        # Schema name 1
-   ├      ├      ├──datasource                  # Datasource configuration
-   ├      ├      ├──rule                        # Rule configuration
+   ├      ├      ├──dataSources                 # Datasource configuration
+   ├      ├      ├──rules                       # Rule configuration
    ├      ├      ├──schema                      # Table configuration
    ├      ├──${schema_2}                        # Schema name 2
-   ├      ├      ├──datasource                  # Datasource configuration
-   ├      ├      ├──rule                        # Rule configuration
+   ├      ├      ├──dataSources                 # Datasource configuration
+   ├      ├      ├──rules                       # Rule configuration
    ├      ├      ├──schema                      # Table configuration
    ├──states
    ├    ├──proxynodes
@@ -45,13 +45,17 @@ namespace
    ├    ├     ├──....
 ```
 
-### /users
+### /rules
 
-user configurations. Can configure the username and password for ShardingSphere-Proxy.
+global rule configurations， including configure the username and password for ShardingSphere-Proxy.
 
 ```yaml
-- root@127.0.0.1:root
-- sharding@%:sharding
+- !AUTHORITY
+users:
+  - root@%:root
+  - sharding@127.0.0.1:sharding
+provider:
+  type: NATIVE
 ```
 
 ### /props
@@ -63,44 +67,42 @@ executor-size: 20
 sql-show: true
 ```
 
-### /metadata/${schemeName}/datasource
+### /metadata/${schemeName}/dataSources
 
 A collection of multiple database connection pools, whose properties (e.g. DBCP, C3P0, Druid and HikariCP) are configured by users themselves.
 
 ```yaml
-dataSources:
-  ds_0: 
-    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
-    props:
-      url: jdbc:mysql://127.0.0.1:3306/demo_ds_0?serverTimezone=UTC&useSSL=false
-      password: null
-      maxPoolSize: 50
-      maintenanceIntervalMilliseconds: 30000
-      connectionTimeoutMilliseconds: 30000
-      idleTimeoutMilliseconds: 60000
-      minPoolSize: 1
-      username: root
-      maxLifetimeMilliseconds: 1800000
-  ds_1: 
-    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
-    props:
-      url: jdbc:mysql://127.0.0.1:3306/demo_ds_1?serverTimezone=UTC&useSSL=false
-      password: null
-      maxPoolSize: 50
-      maintenanceIntervalMilliseconds: 30000
-      connectionTimeoutMilliseconds: 30000
-      idleTimeoutMilliseconds: 60000
-      minPoolSize: 1
-      username: root
-      maxLifetimeMilliseconds: 1800000
+ds_0: 
+  dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+  props:
+    url: jdbc:mysql://127.0.0.1:3306/demo_ds_0?serverTimezone=UTC&useSSL=false
+    password: null
+    maxPoolSize: 50
+    maintenanceIntervalMilliseconds: 30000
+    connectionTimeoutMilliseconds: 30000
+    idleTimeoutMilliseconds: 60000
+    minPoolSize: 1
+    username: root
+    maxLifetimeMilliseconds: 1800000
+ds_1: 
+  dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+  props:
+    url: jdbc:mysql://127.0.0.1:3306/demo_ds_1?serverTimezone=UTC&useSSL=false
+    password: null
+    maxPoolSize: 50
+    maintenanceIntervalMilliseconds: 30000
+    connectionTimeoutMilliseconds: 30000
+    idleTimeoutMilliseconds: 60000
+    minPoolSize: 1
+    username: root
+    maxLifetimeMilliseconds: 1800000
 ```
 
-### /metadata/${schemeName}/rule
+### /metadata/${schemeName}/rules
 
 Rule configurations, including sharding, readwrite-splitting, data encryption, shadow DB configurations.
 
 ```yaml
-rules:
 - !SHARDING
   xxx
   

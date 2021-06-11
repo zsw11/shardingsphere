@@ -26,6 +26,7 @@ import org.apache.shardingsphere.infra.database.type.dialect.H2DatabaseType;
 import org.apache.shardingsphere.infra.executor.kernel.ExecutorEngine;
 import org.apache.shardingsphere.infra.executor.sql.execute.result.query.QueryResult;
 import org.apache.shardingsphere.infra.executor.sql.execute.result.query.QueryResultMetaData;
+import org.apache.shardingsphere.infra.merge.result.MergedResult;
 import org.apache.shardingsphere.infra.merge.result.impl.memory.MemoryMergedResult;
 import org.apache.shardingsphere.infra.merge.result.impl.memory.MemoryQueryResultRow;
 import org.apache.shardingsphere.infra.metadata.ShardingSphereMetaData;
@@ -35,8 +36,6 @@ import org.apache.shardingsphere.infra.metadata.schema.ShardingSphereSchema;
 import org.apache.shardingsphere.infra.metadata.schema.model.ColumnMetaData;
 import org.apache.shardingsphere.infra.metadata.schema.model.IndexMetaData;
 import org.apache.shardingsphere.infra.metadata.schema.model.TableMetaData;
-import org.apache.shardingsphere.infra.metadata.user.ShardingSphereUser;
-import org.apache.shardingsphere.infra.metadata.user.ShardingSphereUsers;
 import org.apache.shardingsphere.infra.rule.ShardingSphereRule;
 import org.apache.shardingsphere.proxy.backend.communication.jdbc.connection.BackendConnection;
 import org.apache.shardingsphere.proxy.backend.context.ProxyContext;
@@ -70,7 +69,7 @@ public final class DatabaseCommunicationEngineTest {
     @Before
     public void setUp() {
         MetaDataContexts metaDataContexts = new StandardMetaDataContexts(mockMetaDataMap(), mock(ShardingSphereRuleMetaData.class), mock(ExecutorEngine.class), 
-                new ShardingSphereUsers(Collections.singleton(new ShardingSphereUser("root", "root", ""))), new ConfigurationProperties(new Properties()));
+                new ConfigurationProperties(new Properties()));
         ProxyContext.getInstance().init(metaDataContexts, new StandardTransactionContexts());
     }
     
@@ -97,8 +96,8 @@ public final class DatabaseCommunicationEngineTest {
             private MemoryQueryResultRow memoryQueryResultRow;
             
             @Override
-            protected List<MemoryQueryResultRow> init(final ShardingSphereRule rule, final ShardingSphereSchema schema, final SQLStatementContext sqlStatementContext,
-                                                      final List<QueryResult> queryResults) {
+            protected List<MemoryQueryResultRow> init(final ShardingSphereRule rule, final ShardingSphereSchema schema, 
+                                                      final SQLStatementContext sqlStatementContext, final List<QueryResult> queryResults, final MergedResult mergedResult) {
                 memoryQueryResultRow = mock(MemoryQueryResultRow.class);
                 return Collections.singletonList(memoryQueryResultRow);
             }

@@ -26,9 +26,9 @@ import org.apache.shardingsphere.infra.database.type.dialect.MySQLDatabaseType;
 import org.apache.shardingsphere.infra.executor.kernel.ExecutorEngine;
 import org.apache.shardingsphere.infra.metadata.ShardingSphereMetaData;
 import org.apache.shardingsphere.infra.metadata.rule.ShardingSphereRuleMetaData;
-import org.apache.shardingsphere.infra.metadata.user.ShardingSphereUsers;
 import org.apache.shardingsphere.proxy.backend.communication.jdbc.connection.BackendConnection;
 import org.apache.shardingsphere.proxy.backend.context.ProxyContext;
+import org.apache.shardingsphere.proxy.frontend.postgresql.command.PostgreSQLConnectionContext;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -49,6 +49,9 @@ import static org.mockito.Mockito.when;
 public final class PostgreSQLComParseExecutorTest {
     
     @Mock
+    private PostgreSQLConnectionContext connectionContext;
+    
+    @Mock
     private PostgreSQLComParsePacket parsePacket;
     
     @Mock
@@ -62,10 +65,10 @@ public final class PostgreSQLComParseExecutorTest {
         when(backendConnection.getSchemaName()).thenReturn("schema");
         Field metaDataContexts = ProxyContext.getInstance().getClass().getDeclaredField("metaDataContexts");
         metaDataContexts.setAccessible(true);
-        metaDataContexts.set(ProxyContext.getInstance(), new StandardMetaDataContexts(getMetaDataMap(), 
-                mock(ShardingSphereRuleMetaData.class), mock(ExecutorEngine.class), new ShardingSphereUsers(Collections.emptyList()), new ConfigurationProperties(new Properties())));
+        metaDataContexts.set(ProxyContext.getInstance(), new StandardMetaDataContexts(getMetaDataMap(),
+                mock(ShardingSphereRuleMetaData.class), mock(ExecutorEngine.class), new ConfigurationProperties(new Properties())));
         PostgreSQLBinaryStatementRegistry.getInstance().register(1);
-        PostgreSQLComParseExecutor actual = new PostgreSQLComParseExecutor(parsePacket, backendConnection);
+        PostgreSQLComParseExecutor actual = new PostgreSQLComParseExecutor(connectionContext, parsePacket, backendConnection);
         assertThat(actual.execute().iterator().next(), instanceOf(PostgreSQLParseCompletePacket.class));
     }
     
@@ -77,9 +80,11 @@ public final class PostgreSQLComParseExecutorTest {
     
     @Test
     public void assertGetSqlWithNull() {
+        when(parsePacket.getStatementId()).thenReturn("");
         when(parsePacket.getSql()).thenReturn("");
         when(backendConnection.getConnectionId()).thenReturn(1);
-        PostgreSQLComParseExecutor actual = new PostgreSQLComParseExecutor(parsePacket, backendConnection);
+        PostgreSQLBinaryStatementRegistry.getInstance().register(1);
+        PostgreSQLComParseExecutor actual = new PostgreSQLComParseExecutor(connectionContext, parsePacket, backendConnection);
         assertThat(actual.execute().iterator().next(), instanceOf(PostgreSQLParseCompletePacket.class));
     }
 }

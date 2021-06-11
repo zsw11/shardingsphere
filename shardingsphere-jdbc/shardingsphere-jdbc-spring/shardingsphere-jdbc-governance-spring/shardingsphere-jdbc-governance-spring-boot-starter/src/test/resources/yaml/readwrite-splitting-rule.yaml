@@ -15,14 +15,12 @@
 # limitations under the License.
 #
 
-rules:
 - !READWRITE_SPLITTING
   loadBalancers:
     roundRobin:
       type: ROUND_ROBIN
   dataSources:
     pr_ds:
-      name: pr_ds
       loadBalancerName: roundRobin
       writeDataSourceName: write_ds
       readDataSourceNames:

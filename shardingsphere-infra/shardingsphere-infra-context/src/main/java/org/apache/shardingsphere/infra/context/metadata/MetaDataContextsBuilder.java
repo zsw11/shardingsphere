@@ -33,8 +33,6 @@ import org.apache.shardingsphere.infra.metadata.rule.ShardingSphereRuleMetaData;
 import org.apache.shardingsphere.infra.metadata.schema.ShardingSphereSchema;
 import org.apache.shardingsphere.infra.metadata.schema.builder.SchemaBuilder;
 import org.apache.shardingsphere.infra.metadata.schema.builder.SchemaBuilderMaterials;
-import org.apache.shardingsphere.infra.metadata.user.ShardingSphereUser;
-import org.apache.shardingsphere.infra.metadata.user.ShardingSphereUsers;
 import org.apache.shardingsphere.infra.rule.ShardingSphereRule;
 import org.apache.shardingsphere.infra.rule.builder.ShardingSphereRulesBuilder;
 
@@ -62,23 +60,20 @@ public final class MetaDataContextsBuilder {
     
     private final Collection<RuleConfiguration> globalRuleConfigs;
     
-    private final Collection<ShardingSphereUser> users;
-    
     private final ConfigurationProperties props;
     
     private final ExecutorEngine executorEngine;
     
     public MetaDataContextsBuilder(final Map<String, Map<String, DataSource>> dataSources, final Map<String, Collection<RuleConfiguration>> schemaRuleConfigs, final Properties props) {
-        this(dataSources, schemaRuleConfigs, new LinkedList<>(), new LinkedList<>(), props);
+        this(dataSources, schemaRuleConfigs, new LinkedList<>(), props);
     }
     
     public MetaDataContextsBuilder(final Map<String, Map<String, DataSource>> dataSources,
                                    final Map<String, Collection<RuleConfiguration>> schemaRuleConfigs, final Collection<RuleConfiguration> globalRuleConfigs, 
-                                   final Collection<ShardingSphereUser> users, final Properties props) {
+                                   final Properties props) {
         this.dataSources = dataSources;
         this.schemaRuleConfigs = schemaRuleConfigs;
         this.globalRuleConfigs = globalRuleConfigs;
-        this.users = users;
         this.props = new ConfigurationProperties(null == props ? new Properties() : props);
         executorEngine = new ExecutorEngine(this.props.<Integer>getValue(ConfigurationPropertyKey.EXECUTOR_SIZE));
     }
@@ -94,7 +89,7 @@ public final class MetaDataContextsBuilder {
         for (String each : schemaRuleConfigs.keySet()) {
             mataDataMap.put(each, buildMetaData(each));
         }
-        return new StandardMetaDataContexts(mataDataMap, buildGlobalSchemaMetaData(mataDataMap), executorEngine, new ShardingSphereUsers(users), props);
+        return new StandardMetaDataContexts(mataDataMap, buildGlobalSchemaMetaData(mataDataMap), executorEngine, props);
     }
     
     private ShardingSphereMetaData buildMetaData(final String schemaName) throws SQLException {
@@ -105,9 +100,9 @@ public final class MetaDataContextsBuilder {
         ShardingSphereRuleMetaData ruleMetaData = new ShardingSphereRuleMetaData(ruleConfigs, rules);
         return new ShardingSphereMetaData(schemaName, buildResource(databaseType, dataSourceMap), ruleMetaData, buildSchema(databaseType, dataSourceMap, rules));
     }
-    
+
     private ShardingSphereRuleMetaData buildGlobalSchemaMetaData(final Map<String, ShardingSphereMetaData> mataDataMap) {
-        return new ShardingSphereRuleMetaData(globalRuleConfigs, ShardingSphereRulesBuilder.buildGlobalRules(globalRuleConfigs, mataDataMap, users));
+        return new ShardingSphereRuleMetaData(globalRuleConfigs, ShardingSphereRulesBuilder.buildGlobalRules(globalRuleConfigs, mataDataMap));
     }
     
     private ShardingSphereResource buildResource(final DatabaseType databaseType, final Map<String, DataSource> dataSourceMap) throws SQLException {

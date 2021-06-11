@@ -49,5 +49,7 @@ execute
     | alterSynonym
     | alterSession
     | alterDatabase
+    | alterSystem
+    | setConstraints
     ) SEMI_?
     ;

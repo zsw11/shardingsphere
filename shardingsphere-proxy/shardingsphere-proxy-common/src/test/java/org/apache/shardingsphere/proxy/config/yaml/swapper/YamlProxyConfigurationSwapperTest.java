@@ -18,24 +18,28 @@
 package org.apache.shardingsphere.proxy.config.yaml.swapper;
 
 import com.google.common.collect.Lists;
-import org.apache.shardingsphere.governance.core.yaml.config.YamlGovernanceCenterConfiguration;
-import org.apache.shardingsphere.governance.core.yaml.config.YamlGovernanceConfiguration;
+import org.apache.shardingsphere.authority.api.config.AuthorityRuleConfiguration;
+import org.apache.shardingsphere.authority.yaml.config.YamlAuthorityRuleConfiguration;
+import org.apache.shardingsphere.governance.core.yaml.config.pojo.YamlRegistryCenterConfiguration;
+import org.apache.shardingsphere.governance.core.yaml.config.pojo.YamlGovernanceConfiguration;
 import org.apache.shardingsphere.infra.config.RuleConfiguration;
 import org.apache.shardingsphere.infra.config.datasource.DataSourceParameter;
 import org.apache.shardingsphere.infra.metadata.user.Grantee;
 import org.apache.shardingsphere.infra.metadata.user.ShardingSphereUser;
 import org.apache.shardingsphere.infra.metadata.user.ShardingSphereUsers;
 import org.apache.shardingsphere.infra.yaml.config.YamlRuleConfiguration;
+import org.apache.shardingsphere.infra.yaml.config.algorithm.YamlShardingSphereAlgorithmConfiguration;
 import org.apache.shardingsphere.proxy.config.ProxyConfiguration;
 import org.apache.shardingsphere.proxy.config.YamlProxyConfiguration;
 import org.apache.shardingsphere.proxy.config.yaml.YamlDataSourceParameter;
 import org.apache.shardingsphere.proxy.config.yaml.YamlProxyRuleConfiguration;
 import org.apache.shardingsphere.proxy.config.yaml.YamlProxyServerConfiguration;
 import org.apache.shardingsphere.readwritesplitting.api.ReadwriteSplittingRuleConfiguration;
-import org.apache.shardingsphere.readwritesplitting.common.yaml.config.YamlReadwriteSplittingRuleConfiguration;
+import org.apache.shardingsphere.readwritesplitting.yaml.config.YamlReadwriteSplittingRuleConfiguration;
 import org.junit.Test;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -102,9 +106,19 @@ public final class YamlProxyConfigurationSwapperTest {
     }
     
     private void assertAuthority(final ProxyConfiguration proxyConfig) {
-        Optional<ShardingSphereUser> user = new ShardingSphereUsers(proxyConfig.getUsers()).findUser(new Grantee("user1", ""));
+        Optional<ShardingSphereUser> user = new ShardingSphereUsers(getUsersFromAuthorityRule(proxyConfig.getGlobalRules())).findUser(new Grantee("user1", ""));
         assertTrue(user.isPresent());
         assertThat(user.get().getPassword(), is("pass"));
+    }
+
+    private Collection<ShardingSphereUser> getUsersFromAuthorityRule(final Collection<RuleConfiguration> globalRuleConfigs) {
+        for (RuleConfiguration ruleConfig : globalRuleConfigs) {
+            if (ruleConfig instanceof AuthorityRuleConfiguration) {
+                AuthorityRuleConfiguration authorityRuleConfiguration = (AuthorityRuleConfiguration) ruleConfig;
+                return authorityRuleConfiguration.getUsers();
+            }
+        }
+        return Collections.emptyList();
     }
     
     private YamlProxyConfiguration getYamlProxyConfiguration() {
@@ -123,7 +137,7 @@ public final class YamlProxyConfigurationSwapperTest {
     }
     
     private void prepareRegistryCenter(final YamlGovernanceConfiguration yamlGovernanceConfig) {
-        YamlGovernanceCenterConfiguration registryCenterConfig = mock(YamlGovernanceCenterConfiguration.class);
+        YamlRegistryCenterConfiguration registryCenterConfig = mock(YamlRegistryCenterConfiguration.class);
         when(yamlGovernanceConfig.getRegistryCenter()).thenReturn(registryCenterConfig);
         when(registryCenterConfig.getType()).thenReturn("typeOne");
         when(registryCenterConfig.getServerLists()).thenReturn("serverLists1");
@@ -195,7 +209,12 @@ public final class YamlProxyConfigurationSwapperTest {
     }
     
     private void prepareAuthentication(final YamlProxyServerConfiguration yamlProxyServerConfig) {
-        when(yamlProxyServerConfig.getUsers()).thenReturn(getUsers());
+        YamlAuthorityRuleConfiguration yamlAuthorityRuleConfig = new YamlAuthorityRuleConfiguration();
+        yamlAuthorityRuleConfig.setUsers(getUsers());
+        YamlShardingSphereAlgorithmConfiguration provider = new YamlShardingSphereAlgorithmConfiguration();
+        provider.setType("test");
+        yamlAuthorityRuleConfig.setProvider(provider);
+        when(yamlProxyServerConfig.getRules()).thenReturn(Collections.singletonList(yamlAuthorityRuleConfig));
     }
 
     private Collection<String> getUsers() {

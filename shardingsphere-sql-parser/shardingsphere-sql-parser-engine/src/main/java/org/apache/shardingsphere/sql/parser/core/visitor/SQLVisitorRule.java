@@ -94,6 +94,8 @@ public enum SQLVisitorRule {
     
     ALTER_SESSION("AlterSession", SQLStatementType.DDL),
     
+    ALTER_SYSTEM("AlterSystem", SQLStatementType.DDL),
+    
     DROP_SERVER("DropServer", SQLStatementType.DDL),
     
     CREATE_TRIGGER("CreateTrigger", SQLStatementType.DDL),
@@ -112,13 +114,31 @@ public enum SQLVisitorRule {
 
     DROP_SEQUENCE("DropSequence", SQLStatementType.DDL),
     
-    ALTER_SYNONYM("AlterSynonym", SQLStatementType.DDL),  
-  
+    ALTER_SYNONYM("AlterSynonym", SQLStatementType.DDL),
+    
+    PREPARE("Prepare", SQLStatementType.DDL),
+    
+    EXECUTE_STMT("ExecuteStmt", SQLStatementType.DDL),
+    
+    DEALLOCATE("Deallocate", SQLStatementType.DDL),
+    
+    CREATE_TABLESPACE("CreateTablespace", SQLStatementType.DDL),
+    
+    ALTER_TABLESPACE("AlterTablespace", SQLStatementType.DDL),
+    
+    DROP_TABLESPACE("DropTablespace", SQLStatementType.DDL),
+
+    SET_CONSTRAINTS("SetConstraints", SQLStatementType.TCL),
+    
     SET_TRANSACTION("SetTransaction", SQLStatementType.TCL),
     
     SET_IMPLICIT_TRANSACTIONS("SetImplicitTransactions", SQLStatementType.TCL),
     
     BEGIN_TRANSACTION("BeginTransaction", SQLStatementType.TCL),
+    
+    START_TRANSACTION("StartTransaction", SQLStatementType.TCL),
+    
+    END("End", SQLStatementType.TCL),
     
     SET_AUTOCOMMIT("SetAutoCommit", SQLStatementType.TCL),
     
@@ -126,7 +146,11 @@ public enum SQLVisitorRule {
     
     ROLLBACK("Rollback", SQLStatementType.TCL),
     
-    SAVE_POINT("Savepoint", SQLStatementType.TCL),
+    SAVEPOINT("Savepoint", SQLStatementType.TCL),
+    
+    RELEASE_SAVEPOINT("ReleaseSavepoint", SQLStatementType.TCL),
+    
+    ROLLBACK_TO_SAVEPOINT("RollbackToSavepoint", SQLStatementType.TCL),
     
     GRANT("Grant", SQLStatementType.DCL),
     
@@ -203,6 +227,12 @@ public enum SQLVisitorRule {
     RESET_PARAMETER("ResetParameter", SQLStatementType.DAL),
     
     VACUUM("Vacuum", SQLStatementType.DAL),
+    
+    CREATE_LOADABLE_FUNCTION("CreateLoadableFunction", SQLStatementType.DAL),
+    
+    ANALYZE("AnalyzeTable", SQLStatementType.DAL),
+    
+    LOAD("Load", SQLStatementType.DAL),
     
     CALL("Call", SQLStatementType.DML),
     

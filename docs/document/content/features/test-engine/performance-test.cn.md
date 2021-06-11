@@ -149,8 +149,7 @@ rules:
 - !READWRITE_SPLITTING
   dataSources:
     pr_ds:
-      name: pr_ds
-      writeyDataSourceName: primary_ds
+      writeDataSourceName: primary_ds
       readDataSourceNames:
         - replica_ds_0
 ```
@@ -303,8 +302,6 @@ rules:
         pad:
           cipherColumn: pad_cipher
           encryptorName: md5_encryptor
-props:
-  query-with-cipher-column: true
 ```
 
 #### 全路由

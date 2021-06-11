@@ -25,13 +25,28 @@ execute
     | createShardingTableRule
     | createShardingBindingTableRules
     | createShardingBroadcastTableRules
-    | alterShardingRule
-    | dropShardingRule
-    | createReplicaQueryRule
-    | alterReplicaQueryRule
-    | dropReplicaQueryRule
+    | createReadwriteSplittingRule
+    | alterShardingTableRule
+    | alterShardingBindingTableRules
+    | alterShardingBroadcastTableRules
+    | dropShardingTableRule
+    | dropShardingBindingTableRules
+    | dropShardingBroadcastTableRules
+    | alterReadwriteSplittingRule
+    | dropReadwriteSplittingRule
+    | createDatabaseDiscoveryRule
+    | alterDatabaseDiscoveryRule
+    | dropDatabaseDiscoveryRule
+    | createEncryptRule
+    | alterEncryptRule
+    | dropEncryptRule
     | showResources
-    | showRule
+    | showShardingBindingTableRules
+    | showShardingBroadcastTableRules
+    | showReadwriteSplittingRules
+    | showDatabaseDiscoveryRules
+    | showEncryptRules
+    | showShardingTableRules
     | showScalingJobList
     | showScalingJobStatus
     | startScalingJob

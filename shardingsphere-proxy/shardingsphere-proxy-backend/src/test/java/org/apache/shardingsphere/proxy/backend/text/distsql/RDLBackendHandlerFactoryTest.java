@@ -18,11 +18,11 @@
 package org.apache.shardingsphere.proxy.backend.text.distsql;
 
 import lombok.SneakyThrows;
-import org.apache.shardingsphere.distsql.parser.statement.rdl.AlterReadwriteSplittingRuleStatement;
+import org.apache.shardingsphere.distsql.parser.statement.rdl.alter.AlterReadwriteSplittingRuleStatement;
 import org.apache.shardingsphere.distsql.parser.statement.rdl.create.impl.AddResourceStatement;
 import org.apache.shardingsphere.distsql.parser.statement.rdl.create.impl.CreateReadwriteSplittingRuleStatement;
 import org.apache.shardingsphere.distsql.parser.statement.rdl.create.impl.CreateShardingTableRuleStatement;
-import org.apache.shardingsphere.distsql.parser.statement.rdl.drop.impl.DropReplicaQueryRuleStatement;
+import org.apache.shardingsphere.distsql.parser.statement.rdl.drop.impl.DropReadwriteSplittingRuleStatement;
 import org.apache.shardingsphere.distsql.parser.statement.rdl.drop.impl.DropResourceStatement;
 import org.apache.shardingsphere.distsql.parser.statement.rql.show.ShowResourcesStatement;
 import org.apache.shardingsphere.infra.config.properties.ConfigurationProperties;
@@ -32,11 +32,10 @@ import org.apache.shardingsphere.infra.database.type.dialect.MySQLDatabaseType;
 import org.apache.shardingsphere.infra.executor.kernel.ExecutorEngine;
 import org.apache.shardingsphere.infra.metadata.ShardingSphereMetaData;
 import org.apache.shardingsphere.infra.metadata.rule.ShardingSphereRuleMetaData;
-import org.apache.shardingsphere.infra.metadata.user.ShardingSphereUsers;
 import org.apache.shardingsphere.proxy.backend.communication.jdbc.connection.BackendConnection;
 import org.apache.shardingsphere.proxy.backend.context.ProxyContext;
 import org.apache.shardingsphere.proxy.backend.exception.DBCreateExistsException;
-import org.apache.shardingsphere.proxy.backend.exception.ReadwriteSplittingRuleNotExistedException;
+import org.apache.shardingsphere.proxy.backend.exception.ReadwriteSplittingRulesNotExistedException;
 import org.apache.shardingsphere.proxy.backend.response.header.ResponseHeader;
 import org.apache.shardingsphere.proxy.backend.response.header.query.QueryResponseHeader;
 import org.apache.shardingsphere.proxy.backend.response.header.update.UpdateResponseHeader;
@@ -76,7 +75,7 @@ public final class RDLBackendHandlerFactoryTest {
         Field metaDataContexts = ProxyContext.getInstance().getClass().getDeclaredField("metaDataContexts");
         metaDataContexts.setAccessible(true);
         metaDataContexts.set(ProxyContext.getInstance(), new StandardMetaDataContexts(getMetaDataMap(), 
-                mock(ShardingSphereRuleMetaData.class), mock(ExecutorEngine.class), new ShardingSphereUsers(Collections.emptyList()), new ConfigurationProperties(new Properties())));
+                mock(ShardingSphereRuleMetaData.class), mock(ExecutorEngine.class), new ConfigurationProperties(new Properties())));
     }
     
     @Test
@@ -195,8 +194,8 @@ public final class RDLBackendHandlerFactoryTest {
         ResponseHeader response = rdlBackendHandler.get().execute();
         assertThat(response, instanceOf(UpdateResponseHeader.class));
     }
-
-    @Test(expected = ClassCastException.class)
+    
+    @Test
     public void assertExecuteDropResourceContext() throws SQLException {
         BackendConnection connection = mock(BackendConnection.class);
         when(connection.getSchemaName()).thenReturn("schema");
@@ -211,25 +210,25 @@ public final class RDLBackendHandlerFactoryTest {
         ResponseHeader response = rdlBackendHandler.get().execute();
         assertThat(response, instanceOf(UpdateResponseHeader.class));
     }
-
-    @Test(expected = ReadwriteSplittingRuleNotExistedException.class)
-    public void assertExecuteDropReplicaQueryRuleContext() throws SQLException {
+    
+    @Test(expected = ReadwriteSplittingRulesNotExistedException.class)
+    public void assertExecuteDropReadwriteSplittingRuleContext() throws SQLException {
         BackendConnection connection = mock(BackendConnection.class);
         when(connection.getSchemaName()).thenReturn("schema");
         try {
-            RDLBackendHandlerFactory.newInstance(new MySQLDatabaseType(), mock(DropReplicaQueryRuleStatement.class), connection);
+            RDLBackendHandlerFactory.newInstance(new MySQLDatabaseType(), mock(DropReadwriteSplittingRuleStatement.class), connection);
         } catch (final SQLException ex) {
-            assertThat(ex.getMessage(), is("No Registry center to execute `DropReplicaQueryRuleStatement` SQL"));
+            assertThat(ex.getMessage(), is("No Registry center to execute `DropReadwriteSplittingRuleStatement` SQL"));
         }
         setGovernanceMetaDataContexts(true);
-        Optional<TextProtocolBackendHandler> rdlBackendHandler = RDLBackendHandlerFactory.newInstance(new MySQLDatabaseType(), mock(DropReplicaQueryRuleStatement.class), connection);
+        Optional<TextProtocolBackendHandler> rdlBackendHandler = RDLBackendHandlerFactory.newInstance(new MySQLDatabaseType(), mock(DropReadwriteSplittingRuleStatement.class), connection);
         assertTrue(rdlBackendHandler.isPresent());
         ResponseHeader response = rdlBackendHandler.get().execute();
         assertThat(response, instanceOf(UpdateResponseHeader.class));
     }
 
     @Test
-    public void assertExecuteCreateReplicaQueryRuleContext() throws SQLException {
+    public void assertExecuteCreateReadwriteSplittingRuleContext() throws SQLException {
         BackendConnection connection = mock(BackendConnection.class);
         when(connection.getSchemaName()).thenReturn("schema");
         try {
@@ -243,9 +242,9 @@ public final class RDLBackendHandlerFactoryTest {
         ResponseHeader response = rdlBackendHandler.get().execute();
         assertThat(response, instanceOf(UpdateResponseHeader.class));
     }
-
-    @Test(expected = ReadwriteSplittingRuleNotExistedException.class)
-    public void assertExecuteAlterReplicaQueryRuleContext() throws SQLException {
+    
+    @Test(expected = ReadwriteSplittingRulesNotExistedException.class)
+    public void assertExecuteAlterReadwriteSplittingRuleContext() throws SQLException {
         BackendConnection connection = mock(BackendConnection.class);
         when(connection.getSchemaName()).thenReturn("schema");
         try {

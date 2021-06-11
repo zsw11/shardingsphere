@@ -25,6 +25,7 @@ import org.apache.shardingsphere.infra.executor.check.SQLCheckResult;
 import org.apache.shardingsphere.infra.executor.check.SQLChecker;
 import org.apache.shardingsphere.infra.metadata.ShardingSphereMetaData;
 import org.apache.shardingsphere.infra.metadata.user.Grantee;
+import org.apache.shardingsphere.infra.metadata.user.ShardingSphereUser;
 import org.apache.shardingsphere.sql.parser.sql.common.statement.SQLStatement;
 import org.apache.shardingsphere.sql.parser.sql.dialect.statement.mysql.dal.MySQLShowDatabasesStatement;
 
@@ -32,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiPredicate;
 
 /**
  * Authority checker.
@@ -55,6 +57,20 @@ public final class AuthorityChecker implements SQLChecker<AuthorityRule> {
         Optional<ShardingSpherePrivileges> privileges = authorityRule.findPrivileges(grantee);
         // TODO add error msg
         return privileges.map(optional -> new SQLCheckResult(optional.hasPrivileges(Collections.singletonList(getPrivilege(sqlStatement))), "")).orElseGet(() -> new SQLCheckResult(false, ""));
+    }
+    
+    @Override
+    public boolean check(final Grantee grantee, final AuthorityRule authorityRule) {
+        return authorityRule.findUser(grantee).isPresent();
+    }
+    
+    @Override
+    public boolean check(final Grantee grantee, final BiPredicate<Object, Object> validator, final Object cipher, final AuthorityRule authorityRule) {
+        Optional<ShardingSphereUser> user = authorityRule.findUser(grantee);
+        if (user.isPresent()) {
+            return validator.test(user.get(), cipher);
+        }
+        return false;
     }
     
     private PrivilegeType getPrivilege(final SQLStatement sqlStatement) {

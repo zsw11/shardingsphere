@@ -156,15 +156,15 @@ identifyOptions
     ;
 
 identityOption
-    : START WITH (NUMBER_ | LIMIT VALUE)
-    | INCREMENT BY NUMBER_
-    | MAXVALUE NUMBER_
+    : START WITH (INTEGER_ | LIMIT VALUE)
+    | INCREMENT BY INTEGER_
+    | MAXVALUE INTEGER_
     | NOMAXVALUE
-    | MINVALUE NUMBER_
+    | MINVALUE INTEGER_
     | NOMINVALUE
     | CYCLE
     | NOCYCLE
-    | CACHE NUMBER_
+    | CACHE INTEGER_
     | NOCACHE
     | ORDER
     | NOORDER
@@ -221,7 +221,7 @@ virtualColumnDefinition
     ;
 
 outOfLineConstraint
-    : (CONSTRAINT ignoredIdentifier)?
+    : (CONSTRAINT constraintName)?
     (UNIQUE columnNames
     | primaryKey columnNames 
     | FOREIGN KEY columnNames referencesClause
@@ -232,7 +232,7 @@ outOfLineConstraint
 outOfLineRefConstraint
     : SCOPE FOR LP_ lobItem RP_ IS tableName
     | REF LP_ lobItem RP_ WITH ROWID
-    | (CONSTRAINT ignoredIdentifier)? FOREIGN KEY lobItemList referencesClause constraintState?
+    | (CONSTRAINT constraintName)? FOREIGN KEY lobItemList referencesClause constraintState?
     ;
 
 createIndexSpecification
@@ -380,7 +380,7 @@ modifyConstraintClause
     ;
 
 constraintWithName
-    : CONSTRAINT ignoredIdentifier
+    : CONSTRAINT constraintName
     ;
 
 constraintOption
@@ -398,7 +398,7 @@ renameConstraintClause
 dropConstraintClause
     : DROP
     (
-    constraintPrimaryOrUnique CASCADE? ((KEEP | DROP) INDEX)? | (CONSTRAINT ignoredIdentifier CASCADE?)
+    constraintPrimaryOrUnique CASCADE? ((KEEP | DROP) INDEX)? | (CONSTRAINT constraintName CASCADE?)
     ) 
     ;
 
@@ -787,7 +787,7 @@ hashPartitions
     ;
 
 hashPartitionsByQuantity
-    : PARTITIONS NUMBER_ (STORE IN (tablespaceName (COMMA_ tablespaceName)*))? (tableCompression | indexCompression)? (OVERFLOW STORE IN (tablespaceName (COMMA_ tablespaceName)*))?
+    : PARTITIONS INTEGER_ (STORE IN (tablespaceName (COMMA_ tablespaceName)*))? (tableCompression | indexCompression)? (OVERFLOW STORE IN (tablespaceName (COMMA_ tablespaceName)*))?
     ;
 
 indexCompression
@@ -964,23 +964,141 @@ alterSynonym
     ;
 
 alterTablePartitioning
-    : addTablePartition | dropTablePartition
+    : modifyTablePartition
+    | moveTablePartition
+    | addTablePartition
+    | coalesceTablePartition
+    | dropTablePartition
+    ;
+
+modifyTablePartition
+    : modifyRangePartition
+    | modifyHashPartition
+    | modifyListPartition
+    ;
+
+modifyRangePartition
+    : MODIFY partitionExtendedName (partitionAttributes
+    | (addRangeSubpartition | addHashSubpartition | addListSubpartition)
+    | coalesceTableSubpartition | alterMappingTableClauses | REBUILD? UNUSABLE LOCAL INDEXES
+    | readOnlyClause | indexingClause)
+    ;
+
+modifyHashPartition
+    : MODIFY partitionExtendedName (partitionAttributes | coalesceTableSubpartition
+    | alterMappingTableClauses | REBUILD? UNUSABLE LOCAL INDEXES | readOnlyClause | indexingClause)
+    ;
+
+modifyListPartition
+    : MODIFY partitionExtendedName (partitionAttributes
+    | (ADD | DROP) VALUES LP_ listValues RP_
+    | (addRangeSubpartition | addHashSubpartition | addListSubpartition)
+    | coalesceTableSubpartition | REBUILD? UNUSABLE LOCAL INDEXES | readOnlyClause | indexingClause)
+    ;
+
+partitionExtendedName
+    : PARTITION partitionName
+    | PARTITION FOR LR_ partitionKeyValue (COMMA_ partitionKeyValue)* RP_
+    ;
+
+addRangeSubpartition
+    : ADD rangeSubpartitionDesc (COMMA_ rangeSubpartitionDesc)* dependentTablesClause? updateIndexClauses?
+    ;
+
+dependentTablesClause
+    : DEPENDENT TABLES LP_ tableName LP_ partitionSpec (COMMA_ partitionSpec)* RP_
+    (COMMA_ tableName LP_ partitionSpec (COMMA_ partitionSpec)* RP_)* RP_
+    ;
+
+addHashSubpartition
+    : ADD individualHashSubparts dependentTablesClause? updateIndexClauses? parallelClause?
+    ;
+
+addListSubpartition
+    : ADD listSubpartitionDesc (COMMA_ listSubpartitionDesc)* dependentTablesClause? updateIndexClauses?
+    ;
+
+coalesceTableSubpartition
+    : COALESCE SUBPARTITION subpartitionName updateIndexClauses? parallelClause? allowDisallowClustering?
+    ;
+
+allowDisallowClustering
+    : (ALLOW | DISALLOW) CLUSTERING
+    ;
+
+alterMappingTableClauses
+    : MAPPING TABLE (allocateExtentClause | deallocateUnusedClause)
+    ;
+
+deallocateUnusedClause
+    : DEALLOCATE UNUSED (KEEP sizeClause)?
+    ;
+
+allocateExtentClause
+    : ALLOCATE EXTENT (LP_ (SIZE sizeClause | DATAFILE SQ_ fileName SQ_ | INSTANCE NUMBER_)* RP_)?
+    ;
+
+partitionSpec
+    : PARTITION partitionName? tablePartitionDescription?
+    ;
+
+partitionAttributes
+    : (physicalAttributesClause | loggingClause | allocateExtentClause | deallocateUnusedClause | shrinkClause)*
+      (OVERFLOW (physicalAttributesClause | loggingClause | allocateExtentClause | deallocateUnusedClause)*)?
+      tableCompression? inmemoryClause?
+    ;
+
+shrinkClause
+    : SHRINK SPACE COMPACT? CASCADE?
+    ;
+
+moveTablePartition
+    : MOVE partitionExtendedName (MAPPING TABLE)? tablePartitionDescription? filterCondition? updateAllIndexesClause? parallelClause? allowDisallowClustering? ONLINE?
+    ;
+
+filterCondition
+    : INCLUDING ROWS whereClause
+    ;
+
+whereClause
+    : WHERE expr
+    ;
+
+coalesceTablePartition
+    : COALESCE PARTITION updateIndexClauses? parallelClause? allowDisallowClustering?
     ;
 
 addTablePartition
-    : ADD (addRangePartitionClause | addListPartitionClause)
+    : ADD ((PARTITION partitionName? addRangePartitionClause (COMMA_ PARTITION partitionName? addRangePartitionClause)*)
+        |  (PARTITION partitionName? addListPartitionClause (COMMA_ PARTITION partitionName? addListPartitionClause)*)
+        |  (PARTITION partitionName? addSystemPartitionClause (COMMA_ PARTITION partitionName? addSystemPartitionClause)*)
+        (BEFORE (partitionName | NUMBER_))?
+        |  (PARTITION partitionName? addHashPartitionClause)
+        ) dependentTablesClause?
     ;
 
 addRangePartitionClause
-    : PARTITION partitionName? rangeValuesClause tablePartitionDescription
-    ((LP_? rangeSubpartitionDesc (COMMA_ rangeSubpartitionDesc)* | listSubpartitionDesc (COMMA_ listSubpartitionDesc)* | individualHashSubparts (COMMA_ individualHashSubparts)* RP_?)
-        | hashSubpartitionQuantity)?
+    : rangeValuesClause tablePartitionDescription? externalPartSubpartDataProps?
+    ((LP_? (rangeSubpartitionDesc (COMMA_ rangeSubpartitionDesc)* | listSubpartitionDesc (COMMA_ listSubpartitionDesc)* | individualHashSubparts (COMMA_ individualHashSubparts)*) RP_?)
+    | hashSubpartsByQuantity)? updateIndexClauses?
     ;
 
 addListPartitionClause
-    : PARTITION partitionName? listValuesClause tablePartitionDescription
-    ((LP_? rangeSubpartitionDesc (COMMA_ rangeSubpartitionDesc)* | listSubpartitionDesc (COMMA_ listSubpartitionDesc)* | individualHashSubparts (COMMA_ individualHashSubparts)* RP_?)
-    | hashSubpartitionQuantity)?
+    : listValuesClause tablePartitionDescription? externalPartSubpartDataProps?
+    ((LP_? (rangeSubpartitionDesc (COMMA_ rangeSubpartitionDesc)* | listSubpartitionDesc (COMMA_ listSubpartitionDesc)* | individualHashSubparts (COMMA_ individualHashSubparts)*) RP_?)
+    | hashSubpartsByQuantity)? updateIndexClauses?
+    ;
+
+hashSubpartsByQuantity
+    : SUBPARTITIONS NUMBER_ (STORE IN LP_ tablespaceName (COMMA_ tablespaceName)* RP_)?
+    ;
+
+addSystemPartitionClause
+    : tablePartitionDescription? updateIndexClauses?
+    ;
+
+addHashPartitionClause
+    : partitioningStorageClause updateIndexClauses? parallelClause? readOnlyClause? indexingClause?
     ;
 
 dropTablePartition
@@ -1355,7 +1473,7 @@ defaultSettingsClauses
     | SET DEFAULT (BIGFILE | SMALLFILE) TABLESPACE
     | DEFAULT TABLESPACE tablespaceName
     | DEFAULT LOCAL? TEMPORARY TABLESPACE (tablespaceName | tablespaceGroupName)
-    | RENAME GLOBAL_NAME TO databaseName DO_ domain (DQ_ domain)*
+    | RENAME GLOBAL_NAME TO databaseName DOT_ domain (DOT_ domain)*
     | ENABLE BLOCK CHANGE TRACKING (USING FILE fileName REUSE?)?
     | DISABLE BLOCK CHANGE TRACKING
     | NO? FORCE FULL DATABASE CACHING
@@ -1420,4 +1538,259 @@ leadCdbUriClause
 
 propertyClause
     : PROPERTY (SET | REMOVE) DEFAULT_CREDENTIAL EQ_ qualifiedCredentialName
+    ;
+
+alterSystem
+    : ALTER SYSTEM alterSystemOption
+    ;
+
+alterSystemOption
+    : archiveLogClause
+    | checkpointClause
+    | checkDatafilesClause
+    | distributedRecovClauses
+    | flushClause
+    | endSessionClauses
+    | alterSystemSwitchLogfileClause
+    | suspendResumeClause
+    | quiesceClauses
+    | rollingMigrationClauses
+    | rollingPatchClauses
+    | alterSystemSecurityClauses
+    | affinityClauses
+    | shutdownDispatcherClause
+    | registerClause
+    | setClause
+    | resetClause
+    | relocateClientClause
+    | cancelSqlClause
+    | flushPasswordfileMetadataCacheClause
+    ;
+
+archiveLogClause
+    : ARCHIVE LOG instanceClause? (sequenceClause | changeClause | currentClause | groupClause | logfileClause | nextClause | allClause) toLocationClause?
+    ;
+
+checkpointClause
+    : CHECKPOINT (GLOBAL | LOCAL)?
+    ;
+
+checkDatafilesClause
+    : CHECK DATAFILES (GLOBAL | LOCAL)?
+    ;
+
+distributedRecovClauses
+    : (ENABLE | DISABLE) DISTRIBUTED RECOVERY
+    ;
+
+flushClause
+    : FLUSH flushClauseOption
+    ;
+
+endSessionClauses
+    : (disconnectSessionClause | killSessionClause) (IMMEDIATE | NOREPLY)?
+    ;
+
+alterSystemSwitchLogfileClause
+    : SWITCH LOGFILE
+    ;
+
+suspendResumeClause
+    : SUSPEND | RESUME
+    ;
+
+quiesceClauses
+    : QUIESCE RESTRICTED | UNQUIESCE
+    ;
+
+rollingMigrationClauses
+    : startRollingMigrationClause | stopRollingMigrationClause
+    ;
+
+rollingPatchClauses
+    : startRollingPatchClause | stopRollingPatchClause
+    ;
+
+alterSystemSecurityClauses
+    : restrictedSessionClause | setEncryptionWalletOpenClause | setEncryptionWalletCloseClause | setEncryptionKeyClause
+    ;
+
+affinityClauses
+    : enableAffinityClause | disableAffinityClause
+    ;
+
+shutdownDispatcherClause
+    : SHUTDOWN IMMEDIATE? dispatcherName
+    ;
+
+registerClause
+    : REGISTER
+    ;
+
+setClause
+    : SET alterSystemSetClause+
+    ;
+
+resetClause
+    : RESET alterSystemResetClause+
+    ;
+
+relocateClientClause
+    : RELOCATE CLIENT clientId
+    ;
+
+cancelSqlClause
+    : CANCEL SQL SQ_ sessionId serialNumber (AT_ instanceId)? sqlId? SQ_
+    ;
+
+flushPasswordfileMetadataCacheClause
+    : FLUSH PASSWORDFILE_METADATA_CACHE
+    ;
+
+instanceClause
+    : INSTANCE instanceName
+    ;
+
+sequenceClause
+    : SEQUENCE INTEGER_
+    ;
+
+changeClause
+    : CHANGE INTEGER_
+    ;
+
+currentClause
+    : CURRENT NOSWITCH?
+    ;
+
+groupClause
+    : GROUP INTEGER_
+    ;
+
+logfileClause
+    : LOGFILE logFileName (USING BACKUP CONTROLFILE)?
+    ;
+
+nextClause
+    : NEXT
+    ;
+
+allClause
+    : ALL
+    ;
+
+toLocationClause
+    : TO logFileGroupsArchivedLocationName
+    ;
+
+flushClauseOption
+    : sharedPoolClause | globalContextClause | bufferCacheClause | flashCacheClause | redoToClause
+    ;
+
+disconnectSessionClause
+    : DISCONNECT SESSION SQ_ INTEGER_ COMMA_ INTEGER_ SQ_ POST_TRANSACTION?
+    ;
+
+killSessionClause
+    : KILL SESSION SQ_ INTEGER_ COMMA_ INTEGER_ (COMMA_ AT_ INTEGER_)? SQ_
+    ;
+
+startRollingMigrationClause
+    : START ROLLING MIGRATION TO asmVersion
+    ;
+
+stopRollingMigrationClause
+    : STOP ROLLING MIGRATION
+    ;
+
+startRollingPatchClause
+    : START ROLLING PATCH
+    ;
+
+stopRollingPatchClause
+    : STOP ROLLING PATCH
+    ;
+
+restrictedSessionClause
+    : (ENABLE | DISABLE) RESTRICTED SESSION
+    ;
+
+setEncryptionWalletOpenClause
+    : SET ENCRYPTION WALLET OPEN IDENTIFIED BY (walletPassword | hsmAuthString)
+    ;
+
+setEncryptionWalletCloseClause
+    : SET ENCRYPTION WALLET CLOSE (IDENTIFIED BY (walletPassword | hsmAuthString))?
+    ;
+
+setEncryptionKeyClause
+    : SET ENCRYPTION KEY (identifiedByWalletPassword | identifiedByHsmAuthString)
+    ;
+
+enableAffinityClause
+    : ENABLE AFFINITY tableName (SERVICE serviceName)?
+    ;
+
+disableAffinityClause
+    : DISABLE AFFINITY tableName
+    ;
+
+alterSystemSetClause
+    : setParameterClause | useStoredOutlinesClause | globalTopicEnabledClause
+    ;
+
+alterSystemResetClause
+    : parameterName scopeClause*
+    ;
+
+sharedPoolClause
+    : SHARED_POOL
+    ;
+
+globalContextClause
+    : GLOBAL CONTEXT
+    ;
+
+bufferCacheClause
+    : BUFFER_CACHE
+    ;
+
+flashCacheClause
+    : FLASH_CACHE
+    ;
+
+redoToClause
+    : REDO TO targetDbName (NO? CONFIRM APPLY)?
+    ;
+
+identifiedByWalletPassword
+    : certificateId? IDENTIFIED BY walletPassword
+    ;
+
+identifiedByHsmAuthString
+    : IDENTIFIED BY hsmAuthString (MIGRATE USING walletPassword)?
+    ;
+
+setParameterClause
+    : parameterName EQ_ parameterValue (COMMA_ parameterValue)* alterSystemCommentClause? DEFERRED? containerCurrentAllClause? scopeClause*
+    ;
+
+useStoredOutlinesClause
+    : USE_STORED_OUTLINES EQ_ (TRUE | FALSE | categoryName)
+    ;
+
+globalTopicEnabledClause
+    : GLOBAL_TOPIC_ENABLED EQ_ (TRUE | FALSE)
+    ;
+
+alterSystemCommentClause
+    : COMMENT EQ_ stringLiterals
+    ;
+
+containerCurrentAllClause
+    : CONTAINER EQ_ (CURRENT | ALL)
+    ;
+
+scopeClause
+    : SCOPE EQ_ (MEMORY | SPFILE | BOTH) | SID EQ_ (SQ_ sessionId SQ_ | SQ_ ASTERISK_ SQ_)
     ;

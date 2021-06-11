@@ -42,7 +42,6 @@ rules:
 - !READWRITE_SPLITTING
   dataSources:
     pr_ds:
-      name: pr_ds
       writeDataSourceName: db_write
       readDataSourceNames:
         - read_ds_0
@@ -51,7 +50,7 @@ rules:
 governance:
   name: test_rw_registry_name
   registryCenter:
-    type: REG_TEST
+    type: GOV_TEST
     serverLists: localhost:3181
     props:
       retryIntervalMilliseconds: 10

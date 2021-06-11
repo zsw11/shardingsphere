@@ -23,13 +23,13 @@ import com.google.common.collect.Multimap;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.shardingsphere.db.protocol.parameter.TypeUnspecifiedSQLParameter;
-import org.apache.shardingsphere.infra.metadata.user.Grantee;
 import org.apache.shardingsphere.infra.database.type.DatabaseType;
 import org.apache.shardingsphere.infra.exception.ShardingSphereException;
 import org.apache.shardingsphere.infra.executor.sql.execute.engine.ConnectionMode;
+import org.apache.shardingsphere.infra.executor.sql.federate.execute.FederateExecutor;
 import org.apache.shardingsphere.infra.executor.sql.prepare.driver.jdbc.ExecutorJDBCManager;
 import org.apache.shardingsphere.infra.executor.sql.prepare.driver.jdbc.StatementOption;
-import org.apache.shardingsphere.infra.optimize.execute.CalciteExecutor;
+import org.apache.shardingsphere.infra.metadata.user.Grantee;
 import org.apache.shardingsphere.infra.spi.ShardingSphereServiceLoader;
 import org.apache.shardingsphere.infra.spi.typed.TypedSPIRegistry;
 import org.apache.shardingsphere.proxy.backend.communication.jdbc.statement.StatementMemoryStrictlyFetchSizeSetter;
@@ -50,7 +50,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Backend connection.
@@ -71,9 +70,7 @@ public final class BackendConnection implements ExecutorJDBCManager {
     private volatile Grantee grantee;
     
     @Setter
-    private volatile CalciteExecutor calciteExecutor;
-    
-    private final AtomicInteger submittedTaskCount = new AtomicInteger(0);
+    private volatile FederateExecutor federateExecutor;
     
     private final Multimap<String, Connection> cachedConnections = LinkedHashMultimap.create();
     
@@ -81,7 +78,7 @@ public final class BackendConnection implements ExecutorJDBCManager {
     
     private final Collection<ResultSet> cachedResultSets = new CopyOnWriteArrayList<>();
     
-    private final Collection<MethodInvocation> methodInvocations = new LinkedList<>();
+    private final Collection<ConnectionPostProcessor> connectionPostProcessors = new LinkedList<>();
     
     private final ResourceLock resourceLock = new ResourceLock();
     
@@ -154,9 +151,9 @@ public final class BackendConnection implements ExecutorJDBCManager {
         return result;
     }
     
-    private void replayMethodsInvocation(final Object target) {
-        for (MethodInvocation each : methodInvocations) {
-            each.invoke(target);
+    private void replayMethodsInvocation(final Connection target) {
+        for (ConnectionPostProcessor each : connectionPostProcessors) {
+            each.process(target);
         }
     }
     
@@ -288,21 +285,21 @@ public final class BackendConnection implements ExecutorJDBCManager {
             }
         }
         cachedConnections.clear();
-        methodInvocations.clear();
+        connectionPostProcessors.clear();
         connectionStatus.switchToReleased();
         return result;
     }
     
     /**
-     * Close calcite executor.
+     * Close federate executor.
      * 
-     * @return SQL exception when calcite executor close
+     * @return SQL exception when federate executor close
      */
-    public synchronized Collection<SQLException> closeCalciteExecutor() {
+    public synchronized Collection<SQLException> closeFederateExecutor() {
         Collection<SQLException> result = new LinkedList<>();
-        if (null != calciteExecutor) {
+        if (null != federateExecutor) {
             try {
-                calciteExecutor.close();
+                federateExecutor.close();
             } catch (final SQLException ex) {
                 result.add(ex);
             }

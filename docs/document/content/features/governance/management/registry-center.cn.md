@@ -15,20 +15,20 @@ weight = 1
 
 ## 注册中心数据结构
 
-在定义的命名空间下， `users` 、 `props` 和 `metadata` 节点以 YAML 格式存储配置，可通过修改节点来实现对于配置的动态管理。 `states` 存储数据库访问对象运行节点，用于区分不同数据库访问实例。
+在定义的命名空间下， `rules` 、 `props` 和 `metadata` 节点以 YAML 格式存储配置，可通过修改节点来实现对于配置的动态管理。 `states` 存储数据库访问对象运行节点，用于区分不同数据库访问实例。
 
 ```
 namespace
-   ├──users                                     # 权限配置
+   ├──rules                                     # 全局规则配置
    ├──props                                     # 属性配置
    ├──metadata                                  # Metadata 配置
    ├      ├──${schema_1}                        # Schema 名称1
-   ├      ├      ├──datasource                  # 数据源配置
-   ├      ├      ├──rule                        # 规则配置
+   ├      ├      ├──dataSources                 # 数据源配置
+   ├      ├      ├──rules                       # 规则配置
    ├      ├      ├──schema                      # 表结构配置
    ├      ├──${schema_2}                        # Schema 名称2
-   ├      ├      ├──datasource                  # 数据源配置
-   ├      ├      ├──rule                        # 规则配置
+   ├      ├      ├──dataSources                 # 数据源配置
+   ├      ├      ├──rules                       # 规则配置
    ├      ├      ├──schema                      # 表结构配置
    ├──states
    ├    ├──proxynodes
@@ -45,13 +45,17 @@ namespace
    ├    ├     ├──....
 ```
 
-### /users
+### /rules
 
-权限配置，可配置访问 ShardingSphere-Proxy 的用户名和密码。
+全局规则配置，可包括访问 ShardingSphere-Proxy 用户名和密码的权限配置。
 
 ```yaml
-- root@127.0.0.1:root
-- sharding@%:sharding
+- !AUTHORITY
+users:
+  - root@%:root
+  - sharding@127.0.0.1:sharding
+provider:
+  type: NATIVE
 ```
 
 ### /props
@@ -63,44 +67,42 @@ executor-size: 20
 sql-show: true
 ```
 
-### /metadata/${schemeName}/datasource
+### /metadata/${schemeName}/dataSources
 
 多个数据库连接池的集合，不同数据库连接池属性自适配（例如：DBCP，C3P0，Druid, HikariCP）。
 
 ```yaml
-dataSources:
-  ds_0: 
-    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
-    props:
-      url: jdbc:mysql://127.0.0.1:3306/demo_ds_0?serverTimezone=UTC&useSSL=false
-      password: null
-      maxPoolSize: 50
-      maintenanceIntervalMilliseconds: 30000
-      connectionTimeoutMilliseconds: 30000
-      idleTimeoutMilliseconds: 60000
-      minPoolSize: 1
-      username: root
-      maxLifetimeMilliseconds: 1800000
-  ds_1: 
-    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
-    props:
-      url: jdbc:mysql://127.0.0.1:3306/demo_ds_1?serverTimezone=UTC&useSSL=false
-      password: null
-      maxPoolSize: 50
-      maintenanceIntervalMilliseconds: 30000
-      connectionTimeoutMilliseconds: 30000
-      idleTimeoutMilliseconds: 60000
-      minPoolSize: 1
-      username: root
-      maxLifetimeMilliseconds: 1800000
+ds_0: 
+  dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+  props:
+    url: jdbc:mysql://127.0.0.1:3306/demo_ds_0?serverTimezone=UTC&useSSL=false
+    password: null
+    maxPoolSize: 50
+    maintenanceIntervalMilliseconds: 30000
+    connectionTimeoutMilliseconds: 30000
+    idleTimeoutMilliseconds: 60000
+    minPoolSize: 1
+    username: root
+    maxLifetimeMilliseconds: 1800000
+ds_1: 
+  dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+  props:
+    url: jdbc:mysql://127.0.0.1:3306/demo_ds_1?serverTimezone=UTC&useSSL=false
+    password: null
+    maxPoolSize: 50
+    maintenanceIntervalMilliseconds: 30000
+    connectionTimeoutMilliseconds: 30000
+    idleTimeoutMilliseconds: 60000
+    minPoolSize: 1
+    username: root
+    maxLifetimeMilliseconds: 1800000
 ```
 
-### /metadata/${schemeName}/rule
+### /metadata/${schemeName}/rules
 
 规则配置，可包括数据分片、读写分离、数据加密、影子库压测等配置。
 
 ```yaml
-rules:
 - !SHARDING
   xxx
   

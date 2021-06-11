@@ -33,6 +33,8 @@ public final class ReadwriteSplittingRuleSegment implements ASTNode {
     
     private String name;
     
+    private String autoAwareResource;
+    
     private String writeDataSource;
     
     private Collection<String> readDataSources;

@@ -488,6 +488,10 @@ indexName
     : identifier
     ;
 
+constraintName
+    : identifier
+    ;
+
 alias
     : identifier
     ;
@@ -1831,4 +1835,11 @@ event
 typeNameList
     : typeName (COMMA_ typeName)*
     ;
-
+    
+notExistClause
+    : IF NOT EXISTS
+    ;
+    
+existClause
+    : IF EXISTS
+    ;

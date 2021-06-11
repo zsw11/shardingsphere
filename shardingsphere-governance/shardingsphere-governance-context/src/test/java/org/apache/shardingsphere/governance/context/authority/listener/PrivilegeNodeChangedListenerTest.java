@@ -18,15 +18,11 @@
 package org.apache.shardingsphere.governance.context.authority.listener;
 
 import org.apache.shardingsphere.governance.context.authority.listener.event.AuthorityChangedEvent;
-import org.apache.shardingsphere.governance.core.registry.listener.event.GovernanceEvent;
-import org.apache.shardingsphere.governance.repository.api.RegistryRepository;
 import org.apache.shardingsphere.governance.repository.api.listener.DataChangedEvent;
 import org.apache.shardingsphere.governance.repository.api.listener.DataChangedEvent.Type;
 import org.apache.shardingsphere.infra.metadata.user.Grantee;
 import org.apache.shardingsphere.infra.metadata.user.ShardingSphereUser;
-import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 
 import java.util.Optional;
 
@@ -38,21 +34,11 @@ public final class PrivilegeNodeChangedListenerTest {
     
     private static final String AUTHENTICATION_YAML = "- root1@:root1\n" + "- root2@:root2\n";
     
-    private PrivilegeNodeChangedListener privilegeNodeChangedListener;
-    
-    @Mock
-    private RegistryRepository registryRepository;
-    
-    @Before
-    public void setUp() {
-        privilegeNodeChangedListener = new PrivilegeNodeChangedListener(registryRepository);
-    }
-    
     @Test
     public void assertCreateEvent() {
-        Optional<GovernanceEvent> actual = privilegeNodeChangedListener.createEvent(new DataChangedEvent("test", AUTHENTICATION_YAML, Type.UPDATED));
+        Optional<AuthorityChangedEvent> actual = new PrivilegeNodeChangedWatcher().createGovernanceEvent(new DataChangedEvent("test", AUTHENTICATION_YAML, Type.UPDATED));
         assertTrue(actual.isPresent());
-        Optional<ShardingSphereUser> user = ((AuthorityChangedEvent) actual.get()).getUsers().stream().filter(each -> each.getGrantee().equals(new Grantee("root1", ""))).findFirst();
+        Optional<ShardingSphereUser> user = actual.get().getUsers().stream().filter(each -> each.getGrantee().equals(new Grantee("root1", ""))).findFirst();
         assertTrue(user.isPresent());
         assertThat(user.get().getPassword(), is("root1"));
     }
